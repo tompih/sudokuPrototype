@@ -1,22 +1,49 @@
 #include <stdio.h>
-#include <conio.h> // _getch() and _kbhit()
-#include <windows.h> // Sleep()
+#include <conio.h> //_getch() and _kbhit()
+#include <windows.h> //Sleep()
+#include <stdlib.h> //for random numbers
 
-int numberValidityCheck();
+
 
 int main()
 {
     printf("Hello World!\n");
+    
+    void randomStartingNumbers();
+    int numberValiditCheck();
 
-    //numbers for testing
+    //initialize the grid
     int numberGrid[4][4] = { 
+        {0,0,0,0},
+        {0,0,0,0},
+        {0,0,0,0},
+        {0,0,0,0} };
+
+    int startingNumPos[4][2] = { {0,0},{0,0},{0,0},{0,0}, };
+
+
+    //give 4 starting numbers
+    randomStartingNumbers(numberGrid, startingNumPos);
+
+    
+    //print starting number positions
+    for (int i = 0; i < 4; i++)
+    {
+        printf("starting number positions: %d, %d\n", startingNumPos[i][0], startingNumPos[i][1]);
+    }
+    
+
+    /*
+    //testing grid
+    int numberGrid[4][4] = {
         {1,3,2,4},
         {4,2,3,1},
         {3,4,1,2},
         {2,1,0,3} };
+        */
 
     //works
-    //numberValidityCheck(numberGrid);
+    //numberValidityCheck(numberGrid);  
 
     /*
     //test print the numbers
@@ -39,8 +66,8 @@ int main()
     */
 
     //numberGrid testing position start
-    int gridY = 1; //row
-    int gridX = 2; //col
+    int gridY = 0; //row
+    int gridX = 0; //col
 
     int pointerNum = -1;
     int blinkCounter = 0;
@@ -50,7 +77,7 @@ int main()
     int running = 1;
     while (running == 1) {
 
-        //test print the numbers
+        //print the numbers
         for (int i = 0; i < 4; ++i) {
             printf("... ");
             for (int x = 0; x < 4; ++x) {
@@ -62,11 +89,12 @@ int main()
         //so that you aren't overwriting anything on the first run
         if (pointerNum != -1)numberGrid[gridY][gridX] = pointerNum;
 
+        //pointerNum stores number from grid at current position
         pointerNum = numberGrid[gridY][gridX];
 
         //changes pointed number to 0 and back to original on alternating loops
         if (blinkCounter == 0) {
-            numberGrid[gridY][gridX] = 0;
+            numberGrid[gridY][gridX] = 5;
             blinkCounter++;
         }
         else {
@@ -88,6 +116,7 @@ int main()
 
             //wasd for directional inputs, e for selection
             int inputCleared = 0;
+            int isStartingNum = 0;
             switch (pointerDir) {
             case 'w':
                 if (gridY != 0) {
@@ -131,38 +160,51 @@ int main()
                 break;
             case 'e':
                 //code for inputting numbers goes here
-                while (inputCleared == 0) {
-                    if (_kbhit()) {
-                        pointerDir = _getch();
-                        printf("%c\n", pointerDir);
-
-                        //let's implement up right down left as 1 2 3 4 for now
-                        switch (pointerDir) {
-                        case 'w':
-                            numberGrid[gridY][gridX] = 1;
-                            break;
-                        case 'd':
-                            numberGrid[gridY][gridX] = 2;
-                            break;
-                        case 's':
-                            numberGrid[gridY][gridX] = 3;
-                            break;
-                        case 'a':
-                            numberGrid[gridY][gridX] = 4;
-                            break;
-                        case 'e':
-
-                            break;
-                        default:
-                            break;
-                        }
-                        inputCleared = 1;
+                //check if current position is a starting number
+                for (int i = 0; i < 4; i++)
+                {
+                    if (gridY == startingNumPos[i][0] && gridX == startingNumPos[i][1]) {
+                        isStartingNum = 1;
                     }
                 }
-                //after input, check if the game is won
-                if (numberValidityCheck(numberGrid) == 0) {
-                    printf("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
+                if (isStartingNum != 0) {
+                    printf("Can't change a starting number!\n");
                 }
+                else {
+                    while (inputCleared == 0) {
+                        if (_kbhit()) {
+                            pointerDir = _getch();
+                            printf("%c\n", pointerDir);
+
+                            //let's implement up right down left as 1 2 3 4 for now
+                            switch (pointerDir) {
+                            case 'w':
+                                numberGrid[gridY][gridX] = 1;
+                                break;
+                            case 'd':
+                                numberGrid[gridY][gridX] = 2;
+                                break;
+                            case 's':
+                                numberGrid[gridY][gridX] = 3;
+                                break;
+                            case 'a':
+                                numberGrid[gridY][gridX] = 4;
+                                break;
+                            case 'e':
+
+                                break;
+                            default:
+                                break;
+                            }
+                            inputCleared = 1;
+                            //after input, check if the game is won
+                            if (numberValidityCheck(numberGrid) == 0) {
+                                printf("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
+                            }
+                        }
+                    }
+                }
+                
                 break;
             default:
                 break;
@@ -179,6 +221,33 @@ int main()
 }
 
 
+
+void randomStartingNumbers(int gridNums[4][4], int startPositions[4][2]) {
+    time_t t;
+    /* Intializes random number generator */
+    srand((unsigned)time(&t));
+
+    /* Print 50 random numbers from 0 to 3 */
+    for (int i = 0; i < 50; i++) {
+        printf("%d\n", rand() % 4);
+    }
+
+    int randomNum1 = 0;
+    int randomNum2 = 0;
+
+    for (int i = 0; i < 4; i++)
+    {
+        randomNum1 = rand() % 4;
+        randomNum2 = rand() % 4;
+
+        startPositions[i][0] = randomNum1;
+        startPositions[i][1] = randomNum2;
+
+        //printf("TEST:%d and %d\n", startPositions[i][0], startPositions[i][1]);
+
+        gridNums[randomNum1][randomNum2] = i+1;
+    }
+}
 
 int numberValidityCheck(int gridNums[4][4]) {
     int numVal = 0; //set to 1 on fail
