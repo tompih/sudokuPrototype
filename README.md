@@ -2,6 +2,7 @@
 SCHOOL PROJECT
 
 TO DO:
+
 Game ending sequence, restart game.
 
 Measure completion time.
