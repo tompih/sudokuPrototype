@@ -1,4 +1,5 @@
-# sudokuPrototype
+# sudokuPrototype 
+SCHOOL PROJECT
 
 TO DO:
 Game ending sequence, restart game.
