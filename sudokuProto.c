@@ -14,6 +14,10 @@ int main()
 
     //initialize the grid
     int numberGrid[4][4] = { 
+        /*{1,3,2,4},
+        {4,2,3,1},
+        {3,4,1,2},
+        {2,1,0,3}*/
         {0,0,0,0},
         {0,0,0,0},
         {0,0,0,0},
@@ -66,8 +70,8 @@ int main()
     */
 
     //numberGrid testing position start
-    int gridY = 0; //row
-    int gridX = 0; //col
+    int gridY = 3; //row
+    int gridX = 2; //col
 
     int pointerNum = -1;
     int blinkCounter = 0;
@@ -200,6 +204,8 @@ int main()
                             //after input, check if the game is won
                             if (numberValidityCheck(numberGrid) == 0) {
                                 printf("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
+                                //breaks out of gameplay loop
+                                running = 0;
                             }
                         }
                     }
@@ -212,10 +218,11 @@ int main()
             pointerNum = numberGrid[gridY][gridX]; //store pointed number at new location
         }
 
-
         printf("... ------- ...\n");
         Sleep(1000);
     }
+
+
 
     return 0;
 }
