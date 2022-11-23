@@ -13,7 +13,7 @@ Adafruit_LiquidCrystal lcd(0);
 /*const size_t sizeX = 4; //this may not be worthwhile for our purposes
 const size_t sizeY = 4;  //change to 4 once we have the proper display*/
 int numberGrid[4][4] = {
-  /*{ 1, 3, 0, 4 },
+  /*{ 1, 3, 0, 4 },d swdwxqdes
   { 4, 2, 3, 1 },
   { 3, 4, 1, 2 },
   { 2, 1, 4, 3 }//numbers for testing*/
@@ -78,6 +78,7 @@ void loop() {
     while (buttonPress() != 0) {
     }
   }
+  
 }
 
 //functions
@@ -98,6 +99,13 @@ int buttonPress(void) {
   if (digitalRead(keySelect) == 0) {
     buttonPressed = 5;
   }
+  
+  /*
+  while (digitalRead(keyUp) + digitalRead(keyRight) + 
+         digitalRead(keyDown) + digitalRead(keyLeft) + 
+         digitalRead(keySelect) < 5) {
+      Serial.println("key is still pressed");
+  }*/
 
   return buttonPressed;
 }
@@ -162,7 +170,7 @@ void gameCursor(void) {
 }
 
 void inputNumber(void) {
-  while (buttonPress()) {
+  while (buttonPress() != 0) {
   }
   lcd.blink();
   bool inputCleared = false;
@@ -202,7 +210,7 @@ void inputNumber(void) {
           Serial.println("error during button press during input");
           break;
       }
-      while (buttonPress()) {
+      while (buttonPress() != 0) {
       }
       inputCleared = true;
     }
@@ -214,7 +222,7 @@ void sideMenu(void) {
   lcd.setCursor(14, 0);
   int sideMenuPosition = 0;
 
-  while (buttonPress()) {
+  while (buttonPress() != 0) {
   }
   lcd.blink();
   bool inputCleared = false;
@@ -272,7 +280,7 @@ void sideMenu(void) {
           Serial.println("error during button press during sidemenu");
           break;
       }
-      while (buttonPress()) {
+      while (buttonPress() != 0) {
       }
     }
   }
