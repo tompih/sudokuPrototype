@@ -26,11 +26,14 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 /*const size_t sizeX = 4; //this may not be worthwhile for our purposes
 const size_t sizeY = 4;  //change to 4 once we have the proper display*/
 int numberGrid[4][4] = {
+#ifdef DEBUG
+  { 1, 3, 0, 4 },
+  { 4, 2, 3, 1 },
+  { 3, 4, 1, 2 },
+  { 2, 1, 4, 3 }
+#else
   0
-  // { 1, 3, 0, 4 },
-  // { 4, 2, 3, 1 },
-  // { 3, 4, 1, 2 },
-  // { 2, 1, 4, 3 }//numbers for testing
+#endif
 };
 
 int startingNumPos[4][2] = {
@@ -626,7 +629,7 @@ void gameReset(void) {
 #endif
 
   //setup(); //this alone works for about 4 games and then the board supposedly runs out of memory
-  
+
   //new attempt
   //give 4 starting numbers from 1 to 4 at random positions
   randomStartingNumbers();
@@ -653,6 +656,6 @@ void gameReset(void) {
   lcd.leftToRight();
 
   lcd.setCursor(cursorX, cursorY);
-  
+
   lcd.cursor();
 }
