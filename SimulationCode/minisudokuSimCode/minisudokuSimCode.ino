@@ -1,12 +1,11 @@
-#include <Adafruit_LiquidCrystal.h>
-#include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-#include <stdint.h>
-#include <string.h>
+
+//comment this out to disable debug messages to serial monitor
+//#define DEBUG
 
 
 unsigned long myTime;
-const char chars[] = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};//add any additional characters
+const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};  //add any additional characters
 
 
 int charindex = 0;
@@ -21,18 +20,20 @@ const int keyRight = 3;
 const int keyDown = 4;
 const int keyLeft = 5;
 const int keySelect = 6;
-char taulukko[6] = {'@','@','@','@','@','@'};
-Adafruit_LiquidCrystal lcd(0);
 
-
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 /*const size_t sizeX = 4; //this may not be worthwhile for our purposes
 const size_t sizeY = 4;  //change to 4 once we have the proper display*/
 int numberGrid[4][4] = {
+#ifdef DEBUG
   { 1, 3, 0, 4 },
   { 4, 2, 3, 1 },
   { 3, 4, 1, 2 },
-  { 2, 1, 4, 3 }//numbers for testing*/
+  { 2, 1, 4, 3 }
+#else
+  0
+#endif
 };
 
 int startingNumPos[4][2] = {
@@ -46,14 +47,18 @@ int cursorX = 0;
 int cursorY = 0;
 
 void setup() {
+#ifdef DEBUG
   Serial.begin(9600);
+#endif
 
   randomSeed(analogRead(0));
 
-  //give 4 starting numbers
-  //randomStartingNumbers();
+  //give 4 starting numbers from 1 to 4 at random positions
+  randomStartingNumbers();
 
-  lcd.begin(16, 2);
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
 
   pinMode(keyUp, INPUT_PULLUP);
   pinMode(keyRight, INPUT_PULLUP);
@@ -98,6 +103,7 @@ void loop() {
 
 //functions
 int buttonPress(void) {
+  delay(20);
   int buttonPressed = 0;
   if (digitalRead(keyUp) == 0) {
     buttonPressed = 1;
@@ -121,16 +127,20 @@ int buttonPress(void) {
 void gameCursor(void) {
   switch (buttonPress()) {
     case 1:
+#ifdef DEBUG
       Serial.println("UP has been pressed\n");
+#endif
       if (cursorY != 0) {
         cursorY--;
       } else {
-        cursorY = 1;
+        cursorY = 3;
       }
       break;
 
     case 2:
+#ifdef DEBUG
       Serial.println("RIGHT has been pressed\n");
+#endif
       if (cursorX != 3) {
         cursorX++;
       } else {
@@ -140,8 +150,10 @@ void gameCursor(void) {
       break;
 
     case 3:
+#ifdef DEBUG
       Serial.println("DOWN has been pressed");
-      if (cursorY != 1) {
+#endif
+      if (cursorY != 3) {
         cursorY++;
       } else {
         cursorY = 0;
@@ -149,7 +161,9 @@ void gameCursor(void) {
       break;
 
     case 4:
+#ifdef DEBUG
       Serial.println("LEFT has been pressed");
+#endif
       if (cursorX != 0) {
         cursorX--;
       } else {
@@ -159,26 +173,34 @@ void gameCursor(void) {
       break;
 
     case 5:
+#ifdef DEBUG
       Serial.println("SELECT has been pressed");
+#endif
       //allow input if isn't a starting number
       if (!isStartingNumber()) {
         inputNumber();
       }
       //after input, check if the game is won
+
+      lcd.noCursor();  //hide cursor during calculation
       if (numberValidityCheck(numberGrid) == 0) {
+        lcd.cursor();  //enable cursor again
         gameVictory();
       }
+      lcd.cursor();  //enable cursor again
 
       break;
 
     default:
+#ifdef DEBUG
       Serial.println("error during button press");
+#endif
       break;
   }
 }
 
 void inputNumber(void) {
-  while (buttonPress()) {
+  while (buttonPress() != 0) {
   }
   lcd.blink();
   bool inputCleared = false;
@@ -187,38 +209,50 @@ void inputNumber(void) {
     if (buttonPress() != 0) {
       switch (buttonPress()) {
         case 1:
+#ifdef DEBUG
           Serial.println("UP has been pressed during input");
+#endif
           lcd.print(1);
           numberGrid[cursorY][cursorX] = 1;
           break;
 
         case 2:
+#ifdef DEBUG
           Serial.println("RIGHT has been pressed during input");
+#endif
           lcd.print(2);
           numberGrid[cursorY][cursorX] = 2;
           break;
 
         case 3:
+#ifdef DEBUG
           Serial.println("DOWN has been pressed during input");
+#endif
           lcd.print(3);
           numberGrid[cursorY][cursorX] = 3;
           break;
 
         case 4:
+#ifdef DEBUG
           Serial.println("LEFT has been pressed during input");
+#endif
           lcd.print(4);
           numberGrid[cursorY][cursorX] = 4;
           break;
 
         case 5:
+#ifdef DEBUG
           Serial.println("SELECT has been pressed during input");
+#endif
           break;
 
         default:
+#ifdef DEBUG
           Serial.println("error during button press during input");
+#endif
           break;
       }
-      while (buttonPress()) {
+      while (buttonPress() != 0) {
       }
       inputCleared = true;
     }
@@ -230,7 +264,7 @@ void sideMenu(void) {
   lcd.setCursor(14, 0);
   int sideMenuPosition = 0;
 
-  while (buttonPress()) {
+  while (buttonPress() != 0) {
   }
   lcd.blink();
   bool inputCleared = false;
@@ -239,7 +273,9 @@ void sideMenu(void) {
     if (buttonPress() != 0) {
       switch (buttonPress()) {
         case 1:
+#ifdef DEBUG
           Serial.println("UP has been pressed during sidemenu");
+#endif
           if (sideMenuPosition == 0) {
             lcd.setCursor(14, 1);
             sideMenuPosition = 1;
@@ -250,14 +286,18 @@ void sideMenu(void) {
           break;
 
         case 2:
+#ifdef DEBUG
           Serial.println("RIGHT has been pressed during sidemenu");
+#endif
           //move to left side of game grid / back
           cursorX = 0;
           inputCleared = true;
           break;
 
         case 3:
+#ifdef DEBUG
           Serial.println("DOWN has been pressed during sidemenu");
+#endif
           if (sideMenuPosition == 1) {
             lcd.setCursor(14, 0);
             sideMenuPosition = 0;
@@ -268,14 +308,18 @@ void sideMenu(void) {
           break;
 
         case 4:
+#ifdef DEBUG
           Serial.println("LEFT has been pressed during sidemenu");
+#endif
           //move to right side of game grid / back
           cursorX = 3;
           inputCleared = true;
           break;
 
         case 5:
+#ifdef DEBUG
           Serial.println("SELECT has been pressed during sidemenu");
+#endif
           if (sideMenuPosition == 0) {
             gameReset();
           } else {
@@ -285,10 +329,12 @@ void sideMenu(void) {
           break;
 
         default:
+#ifdef DEBUG
           Serial.println("error during button press during sidemenu");
+#endif
           break;
       }
-      while (buttonPress()) {
+      while (buttonPress() != 0) {
       }
     }
   }
@@ -311,9 +357,19 @@ void randomStartingNumbers(void) {
     startingNumPos[i][0] = randomNum1;
     startingNumPos[i][1] = randomNum2;
 
+#ifdef DEBUG
     Serial.println((String) "TEST:" + startingNumPos[i][0] + " and " + startingNumPos[i][1]);
+#endif
 
-    numberGrid[randomNum1][randomNum2] = i + 1;
+    //check if position already has a number
+    if (numberGrid[randomNum1][randomNum2] != 0) {
+      i--;  //decrement i because we want to run this process until all four positions are unique
+      //this has a theoretical possibility to never resolve, but it is too unlikely
+      //if this seems slow we can make it so it's hardwired to go to x square and if that fails then y and so on
+    } else {
+      //there was no starting number here so we place it here
+      numberGrid[randomNum1][randomNum2] = i + 1;
+    }
   }
 }
 
@@ -323,7 +379,10 @@ bool isStartingNumber(void) {
   for (int i = 0; i < 4; i++) {
     if (cursorY == startingNumPos[i][0] && cursorX == startingNumPos[i][1]) {
       isStarter = true;
+
+#ifdef DEBUG
       Serial.println("Can't change a starting number!");
+#endif
     }
   }
 
@@ -347,7 +406,16 @@ int numberValidityCheck(int gridNums[4][4]) {
     for (int j = 0; j < 4; ++j) {
       for (int k = 0; k < 4; ++k) {
         if (gridNums[i][j] == gridNums[i][k] && j != k) {
+
+          //if any number encountered is zero, just exit immediately
+          if (gridNums[i][j] == 0) {
+            return 1;
+          }
+
+#ifdef DEBUG
           Serial.println((String) "on row " + i + ": " + j + ".num = " + k + ".num");
+#endif
+
           numVal = 1;
         }
       }
@@ -360,7 +428,10 @@ int numberValidityCheck(int gridNums[4][4]) {
     for (int j = 0; j < 4; ++j) {
       for (int k = 0; k < 4; ++k) {
         if (gridNums[j][i] == gridNums[k][i] && j != k) {
+#ifdef DEBUG
           Serial.println((String) "on col " + i + ": " + j + ".num = " + k + ".num");
+#endif
+
           numVal = 1;
         }
       }
@@ -374,7 +445,10 @@ int numberValidityCheck(int gridNums[4][4]) {
     for (int j = 0; j < 4; ++j) {
       for (int k = 0; k < 4; ++k) {
         if (subgridNums[i][j] == subgridNums[i][k] && j != k) {
+#ifdef DEBUG
           Serial.println((String) "on subgrid " + i + ": " + j + ".num = " + k + ".num");
+#endif
+
           numVal = 1;
         }
       }
@@ -394,8 +468,8 @@ int numberValidityCheck(int gridNums[4][4]) {
   return numVal;
 }
 
-void gameVictory(void)
-{
+void gameVictory(void) {
+  {
   Serial.println("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
 //laskurit liikkumista ja koordinaatteja varten
   int count = -1;
@@ -651,9 +725,8 @@ void gameVictory(void)
 }
 }
 
-
 void gameReset(void) {
-lcd.clear();
+  lcd.clear();
 
   //fill array with zeros
   for (int i = 0; i < 4; i++) {
@@ -662,13 +735,43 @@ lcd.clear();
     }
   }
 
-  //debug
+#ifdef DEBUG
   for (int i = 0; i < 4; i++) {
     Serial.println();
     for (int j = 0; j < 4; j++) {
       Serial.print(numberGrid[i][j]);
     }
   }
+#endif
 
-  setup();
+  //setup(); //this alone works for about 4 games and then the board supposedly runs out of memory
+
+  //new attempt
+  //give 4 starting numbers from 1 to 4 at random positions
+  randomStartingNumbers();
+
+  // lcd.init();
+  // lcd.backlight();
+  lcd.clear();
+
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      if (numberGrid[i][j] != 0) {
+        lcd.print(numberGrid[i][j]);
+      } else {
+        lcd.print(" ");
+      }
+    }
+    lcd.setCursor(0, i + 1);
+  }
+  lcd.rightToLeft();
+  lcd.setCursor(13, 0);
+  lcd.print("teseR");
+  lcd.setCursor(13, 1);
+  lcd.print("serocS");
+  lcd.leftToRight();
+
+  lcd.setCursor(cursorX, cursorY);
+
+  lcd.cursor();
 }
