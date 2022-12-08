@@ -2,13 +2,14 @@
 
 //comment this out to disable debug messages to serial monitor
 //#define DEBUG
+
 unsigned long startTime;
 unsigned long endTime;
 unsigned long finalTime;
 
 
-const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};  //add any additional characters
-
+const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };  //add any additional characters
+char taulukko[6] = { '@', '@', '@', '@', '@', '@' };
 
 int charindex = 0;
 int buttonState1 = 0;
@@ -17,6 +18,8 @@ int buttonState3 = 0;
 int charsSize = 0;
 int cx = 0;
 int cy = 0;
+
+//name pins
 const int keyUp = 2;
 const int keyRight = 3;
 const int keyDown = 4;
@@ -25,8 +28,7 @@ const int keySelect = 6;
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-/*const size_t sizeX = 4; //this may not be worthwhile for our purposes
-const size_t sizeY = 4;  //change to 4 once we have the proper display*/
+//table for our grid
 int numberGrid[4][4] = {
 #ifdef DEBUG
   { 1, 3, 0, 4 },
@@ -38,6 +40,7 @@ int numberGrid[4][4] = {
 #endif
 };
 
+//table for starting position tracking
 int startingNumPos[4][2] = {
   { 0, 0 },
   { 0, 0 },
@@ -45,70 +48,100 @@ int startingNumPos[4][2] = {
   { 0, 0 },
 };
 
+//custom characters for lcd
+//inverted colors for starting numbers
+byte inverted1[8] = {
+  B11011,
+  B10011,
+  B11011,
+  B11011,
+  B11011,
+  B11011,
+  B10001,
+};
+byte inverted2[8] = {
+  B10001,
+  B01110,
+  B11110,
+  B11101,
+  B11011,
+  B10111,
+  B00000,
+};
+byte inverted3[8] = {
+  B00000,
+  B11101,
+  B11011,
+  B11101,
+  B11110,
+  B01110,
+  B10001,
+};
+byte inverted4[8] = {
+  B11101,
+  B11001,
+  B10101,
+  B01101,
+  B00000,
+  B11101,
+  B11101,
+};
+
+//cursor tracking
 int cursorX = 0;
 int cursorY = 0;
 
+//initialize hardware
 void setup() {
 #ifdef DEBUG
   Serial.begin(9600);
 #endif
 
+  //get seed from floating port
   randomSeed(analogRead(0));
 
-  //give 4 starting numbers from 1 to 4 at random positions
-  randomStartingNumbers();
-
+  //start lcd
   lcd.init();
   lcd.backlight();
   lcd.clear();
 
-  startTime = millis();
-	
+  //add our custom characters to the lcd
+  lcd.createChar(1, inverted1);
+  lcd.createChar(2, inverted2);
+  lcd.createChar(3, inverted3);
+  lcd.createChar(4, inverted4);
+
+  //pullup mode to detect grounded states
   pinMode(keyUp, INPUT_PULLUP);
   pinMode(keyRight, INPUT_PULLUP);
   pinMode(keyDown, INPUT_PULLUP);
   pinMode(keyLeft, INPUT_PULLUP);
   pinMode(keySelect, INPUT_PULLUP);
 
-
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      if (numberGrid[i][j] != 0) {
-        lcd.print(numberGrid[i][j]);
-      } else {
-        lcd.print(" ");
-      }
-    }
-    lcd.setCursor(0, i + 1);
-  }
-  lcd.rightToLeft();
-  lcd.setCursor(13, 0);
-  lcd.print("teseR");
-  lcd.setCursor(13, 1);
-  lcd.print("serocS");
-  lcd.leftToRight();
-
-  lcd.setCursor(cursorX, cursorY);
-
-  //lcd.blink(); // turn on the blinking cursor
-  lcd.cursor();
+  //(re)start the game
+  gameReset();
 }
 
+//main loop
 void loop() {
-
+  //check for button presses
   if (buttonPress() != 0) {
-    gameCursor();
-    lcd.setCursor(cursorX, cursorY);
+    gameCursor();                     //go to input management
+    lcd.setCursor(cursorX, cursorY);  //return cursors to where it belongs
 
+    //wait until the player isn't pressing anything
     while (buttonPress() != 0) {
     }
   }
 }
 
-//functions
+//checks for button presses
 int buttonPress(void) {
-  delay(20);
+  delay(20);  //slight delay to combat duplicate inputs
+
   int buttonPressed = 0;
+
+  //assigns return values based on key pressed
   if (digitalRead(keyUp) == 0) {
     buttonPressed = 1;
   }
@@ -128,12 +161,14 @@ int buttonPress(void) {
   return buttonPressed;
 }
 
+//input system while in main grid area
 void gameCursor(void) {
   switch (buttonPress()) {
-    case 1:
+    case 1:  //up
 #ifdef DEBUG
       Serial.println("UP has been pressed\n");
 #endif
+      //if cursor is at the edge, roll over to the bottom, else move up
       if (cursorY != 0) {
         cursorY--;
       } else {
@@ -141,22 +176,23 @@ void gameCursor(void) {
       }
       break;
 
-    case 2:
+    case 2:  //right
 #ifdef DEBUG
       Serial.println("RIGHT has been pressed\n");
 #endif
+      //if cursor is at the edge, go to side menu , else move right
       if (cursorX != 3) {
         cursorX++;
       } else {
-        //cursorX = 0;//replace with go to side menu
         sideMenu();
       }
       break;
 
-    case 3:
+    case 3:  //down
 #ifdef DEBUG
       Serial.println("DOWN has been pressed");
 #endif
+      //if cursor is at the edge, roll over to the top, else move down
       if (cursorY != 3) {
         cursorY++;
       } else {
@@ -164,28 +200,57 @@ void gameCursor(void) {
       }
       break;
 
-    case 4:
+    case 4:  //left
 #ifdef DEBUG
       Serial.println("LEFT has been pressed");
 #endif
+      //if cursor is at the edge, go to side menu, else move left
       if (cursorX != 0) {
         cursorX--;
       } else {
-        //cursorX = 3;//replace with go to side menu
         sideMenu();
       }
       break;
 
-    case 5:
+    case 5:  //select
 #ifdef DEBUG
       Serial.println("SELECT has been pressed");
 #endif
-      //allow input if isn't a starting number
+      //allow input if selection isn't a starting number
       if (!isStartingNumber()) {
         inputNumber();
-      }
-      //after input, check if the game is won
+      } else {
+        //alert player that the current selection is a starting number
+        //this also works as an additional penalty since it takes up some time
+        for (int i = 0; i < 5; i++) {
+          lcd.setCursor(5, 0);
+          lcd.print("Cant");
+          lcd.setCursor(5, 1);
+          lcd.print("change");
+          lcd.setCursor(5, 2);
+          lcd.print("starting");
+          lcd.setCursor(5, 3);
+          lcd.print("number!");
 
+          delay(350);
+
+          lcd.setCursor(5, 0);
+          lcd.print("    ");
+          lcd.setCursor(5, 1);
+          lcd.print("      ");
+          lcd.setCursor(5, 2);
+          lcd.print("        ");
+          lcd.setCursor(5, 3);
+          lcd.print("       ");
+
+          delay(50);
+        }
+
+        //bring back cursor
+        lcd.setCursor(cursorX, cursorY);
+      }
+
+      //after input, check if the game is won
       lcd.noCursor();  //hide cursor during calculation
       if (numberValidityCheck(numberGrid) == 0) {
         lcd.cursor();  //enable cursor again
@@ -203,48 +268,52 @@ void gameCursor(void) {
   }
 }
 
+//input system while square in grid has been selected
 void inputNumber(void) {
+  //wait until the player isn't pressing anything
   while (buttonPress() != 0) {
   }
-  lcd.blink();
-  bool inputCleared = false;
 
+  lcd.blink();                //enable blinking cursor
+  bool inputCleared = false;  //track if player has entered an input
+
+  //loop as long as no inputs have been received
   while (!inputCleared) {
     if (buttonPress() != 0) {
       switch (buttonPress()) {
-        case 1:
+        case 1:  //up
 #ifdef DEBUG
           Serial.println("UP has been pressed during input");
 #endif
-          lcd.print(1);
-          numberGrid[cursorY][cursorX] = 1;
+          lcd.print(1);                      //prints to lcd (visual)
+          numberGrid[cursorY][cursorX] = 1;  //stores value to table
           break;
 
-        case 2:
+        case 2:  //right
 #ifdef DEBUG
           Serial.println("RIGHT has been pressed during input");
 #endif
-          lcd.print(2);
-          numberGrid[cursorY][cursorX] = 2;
+          lcd.print(2);                      //prints to lcd (visual)
+          numberGrid[cursorY][cursorX] = 2;  //stores value to table
           break;
 
-        case 3:
+        case 3:  //down
 #ifdef DEBUG
           Serial.println("DOWN has been pressed during input");
 #endif
-          lcd.print(3);
-          numberGrid[cursorY][cursorX] = 3;
+          lcd.print(3);                      //prints to lcd (visual)
+          numberGrid[cursorY][cursorX] = 3;  //stores value to table
           break;
 
-        case 4:
+        case 4:  //left
 #ifdef DEBUG
           Serial.println("LEFT has been pressed during input");
 #endif
-          lcd.print(4);
-          numberGrid[cursorY][cursorX] = 4;
+          lcd.print(4);                      //prints to lcd (visual)
+          numberGrid[cursorY][cursorX] = 4;  //stores value to table
           break;
 
-        case 5:
+        case 5:  //select
 #ifdef DEBUG
           Serial.println("SELECT has been pressed during input");
 #endif
@@ -256,80 +325,87 @@ void inputNumber(void) {
 #endif
           break;
       }
+      //wait until the player isn't pressing anything
       while (buttonPress() != 0) {
       }
-      inputCleared = true;
+      inputCleared = true;  //we can now exit the loop
     }
   }
-  lcd.noBlink();
+  lcd.noBlink();  //disable blinking cursor
 }
 
+//input system while in side menu
 void sideMenu(void) {
-  lcd.setCursor(14, 0);
-  int sideMenuPosition = 0;
+  lcd.setCursor(18, 0);      //move cursor to right side of side menu
+  int sideMenuPosition = 0;  //default side menu position is 'Reset'
 
+  //wait until the player isn't pressing anything
   while (buttonPress() != 0) {
   }
-  lcd.blink();
-  bool inputCleared = false;
 
+  lcd.blink();                //enable blinking cursor
+  bool inputCleared = false;  //track if player has entered an input
+
+  //loop as long as no inputs have been received
   while (!inputCleared) {
     if (buttonPress() != 0) {
       switch (buttonPress()) {
-        case 1:
+        case 1:  //up
 #ifdef DEBUG
           Serial.println("UP has been pressed during sidemenu");
 #endif
+          //switch between side menu positions
           if (sideMenuPosition == 0) {
-            lcd.setCursor(14, 1);
+            lcd.setCursor(18, 1);
             sideMenuPosition = 1;
           } else {
-            lcd.setCursor(14, 0);
+            lcd.setCursor(18, 0);
             sideMenuPosition = 0;
           }
           break;
 
-        case 2:
+        case 2:  //right
 #ifdef DEBUG
           Serial.println("RIGHT has been pressed during sidemenu");
 #endif
-          //move to left side of game grid / back
+          //move to left side of the game grid / back
           cursorX = 0;
-          inputCleared = true;
+          inputCleared = true;  //we can set this to true if input was not up or down
           break;
 
-        case 3:
+        case 3:  //down
 #ifdef DEBUG
           Serial.println("DOWN has been pressed during sidemenu");
 #endif
+          //switch between side menu positions
           if (sideMenuPosition == 1) {
-            lcd.setCursor(14, 0);
+            lcd.setCursor(18, 0);
             sideMenuPosition = 0;
           } else {
-            lcd.setCursor(14, 1);
+            lcd.setCursor(18, 1);
             sideMenuPosition = 1;
           }
           break;
 
-        case 4:
+        case 4:  //left
 #ifdef DEBUG
           Serial.println("LEFT has been pressed during sidemenu");
 #endif
           //move to right side of game grid / back
           cursorX = 3;
-          inputCleared = true;
+          inputCleared = true;  //we can set this to true if input was not up or down
           break;
 
-        case 5:
+        case 5:  //select
 #ifdef DEBUG
           Serial.println("SELECT has been pressed during sidemenu");
 #endif
           if (sideMenuPosition == 0) {
-            gameReset();
+            gameReset();  //reset the game
           } else {
             //show highscores
           }
-          inputCleared = true;
+          inputCleared = true;  //we can set this to true if input was not up or down
           break;
 
         default:
@@ -338,26 +414,28 @@ void sideMenu(void) {
 #endif
           break;
       }
+
+      //wait until the player isn't pressing anything
       while (buttonPress() != 0) {
       }
     }
   }
-  lcd.noBlink();
+  lcd.noBlink();  //disable blinking cursor
 }
 
+//creates starting numbers
 void randomStartingNumbers(void) {
-  /* //Print 50 random numbers from 0 to 3
-  for (int i = 0; i < 50; i++) {
-    Serial.println(random(4));
-  }*/
 
   int randomNum1 = 0;
   int randomNum2 = 0;
 
+  //assign numbers 1-4 on random positions
   for (int i = 0; i < 4; i++) {
+    //get two random numbers between 1 and 4
     randomNum1 = random(4);
     randomNum2 = random(4);
 
+    //log our starting number position
     startingNumPos[i][0] = randomNum1;
     startingNumPos[i][1] = randomNum2;
 
@@ -368,8 +446,8 @@ void randomStartingNumbers(void) {
     //check if position already has a number
     if (numberGrid[randomNum1][randomNum2] != 0) {
       i--;  //decrement i because we want to run this process until all four positions are unique
-      //this has a theoretical possibility to never resolve, but it is too unlikely
-      //if this seems slow we can make it so it's hardwired to go to x square and if that fails then y and so on
+            //this has a theoretical possibility to never resolve, but it is too unlikely
+            //if this seems slow we can make it so it's hardwired to go to x square and if that fails then y and so on
     } else {
       //there was no starting number here so we place it here
       numberGrid[randomNum1][randomNum2] = i + 1;
@@ -377,9 +455,11 @@ void randomStartingNumbers(void) {
   }
 }
 
+//checks if current position of cursor is a starting number
 bool isStartingNumber(void) {
   bool isStarter = false;
 
+  //rolls through all the starting number positions to see if y and x coordinates match
   for (int i = 0; i < 4; i++) {
     if (cursorY == startingNumPos[i][0] && cursorX == startingNumPos[i][1]) {
       isStarter = true;
@@ -393,10 +473,14 @@ bool isStartingNumber(void) {
   return isStarter;
 }
 
+//checks if the game is valid and won
+//there must be no duplicate numbers for any row, columns and subgrids, and the grid's sum has to be correct
 int numberValidityCheck(int gridNums[4][4]) {
   int numVal = 0;  //set to 1 on fail
 
-  //make subgrids easier to manage
+  //make subgrids easier to manage / visualize
+  //if we had a bigger screen that facilitated bigger grids
+  //we should make rework this into a more generalized solution
   int subgridNums[4][4] = {
     { gridNums[0][0], gridNums[0][1], gridNums[1][0], gridNums[1][1] },
     { gridNums[0][2], gridNums[0][3], gridNums[1][2], gridNums[1][3] },
@@ -409,6 +493,8 @@ int numberValidityCheck(int gridNums[4][4]) {
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       for (int k = 0; k < 4; ++k) {
+
+        //if number is a match AND isn't comparing to itself
         if (gridNums[i][j] == gridNums[i][k] && j != k) {
 
           //if any number encountered is zero, just exit immediately
@@ -431,6 +517,8 @@ int numberValidityCheck(int gridNums[4][4]) {
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       for (int k = 0; k < 4; ++k) {
+
+        //if number is a match AND isn't comparing to itself
         if (gridNums[j][i] == gridNums[k][i] && j != k) {
 #ifdef DEBUG
           Serial.println((String) "on col " + i + ": " + j + ".num = " + k + ".num");
@@ -448,6 +536,8 @@ int numberValidityCheck(int gridNums[4][4]) {
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       for (int k = 0; k < 4; ++k) {
+
+        //if number is a match AND isn't comparing to itself
         if (subgridNums[i][j] == subgridNums[i][k] && j != k) {
 #ifdef DEBUG
           Serial.println((String) "on subgrid " + i + ": " + j + ".num = " + k + ".num");
@@ -466,32 +556,36 @@ int numberValidityCheck(int gridNums[4][4]) {
       sum += gridNums[i][j];
     }
   }
-  //printf("%d\n", sum); //for debugging
-  if (sum != 40) numVal = 1;
+
+  if (sum != 40) numVal = 1;  //sum was incorrect so the grid must be invalid
 
   return numVal;
 }
 
+//game victory sequence
 void gameVictory(void) {
   endTime = millis();
-  finalTime = (endTime - startTime); 
-  Serial.print("Time:"); 
-  Serial.println(finalTime/1000); 
+  finalTime = (endTime - startTime);
+#ifdef DEBUG
+  Serial.print("Time:");
+  Serial.println(finalTime / 1000);
+#endif
 
-  
+#ifdef DEBUG
   Serial.println("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
-//laskurit liikkumista ja koordinaatteja varten
+#endif
+  //laskurit liikkumista ja koordinaatteja varten
   int count = -1;
   int loc = 0;
   int locY = 0;
-//tulostetaan voiton onnittelut 
-  lcd.begin(16,2);
+  //tulostetaan voiton onnittelut
+  lcd.begin(16, 2);
   lcd.print("YOU WON!");
- lcd.setCursor(0,1);
+  lcd.setCursor(0, 1);
   lcd.print("TIME:");
-  lcd.setCursor(7,1);
-  lcd.print(finalTime/1000);
-  lcd.setCursor(9,1);
+  lcd.setCursor(7, 1);
+  lcd.print(finalTime / 1000);
+  lcd.setCursor(9, 1);
   lcd.print("SEC");
   delay(5000);
   lcd.clear();
@@ -505,10 +599,9 @@ void gameVictory(void) {
   lcd.setCursor(0, 0);
 
   lcd.blink();
-  
+
   //Painikkeiden painallusten toiminnot
   while (buttonPress() != 0) {
-
   }
   lcd.blink();
   bool inputCleared = false;
@@ -520,237 +613,239 @@ void gameVictory(void) {
         cursorX = 0;
         cursorY = 0;
         case 1:
+#ifdef DEBUG
+          Serial.println("UP has been pressed during input");
+#endif
+          //Kirjaimen valinta, jos kursori ylärivillä
+          if (locY == 0) {  //hypätään kirjainten alkuun, jos lopussa
 
-        Serial.println("UP has been pressed during input");
-        //Kirjaimen valinta, jos kursori ylärivillä
-        if(locY == 0){										//hypätään kirjainten alkuun, jos lopussa
-          
-          if(count == sizeof(chars) / sizeof(char) - 1){
-            count = -1;
-            
+            if (count == sizeof(chars) / sizeof(char) - 1) {
+              count = -1;
+            }
+            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+
+            break;
+          } else if (locY == 0 && loc == 0) {
+
+
+            count = 0;
+            count = count + 1;  //kirjaimen valintalaskuri eteenpäin
+
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+
+
+            break;
           }
-          count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-          lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-          lcd.print(chars[count]);	// tulostetaan kirjain
-          taulukko[loc]=chars[count];
-          
-          break;
-        }
-	  else if(locY == 0 && loc == 0){
-        
-		
-	    count = 0;		
-	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-        
-        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-        lcd.print(chars[count]);	// tulostetaan kirjain
-        taulukko[loc]=chars[count];
-          
-          
-          break;
-	  }
-		
-	  else if(locY == 0 && loc == 1){
-	    
-	    count = 0;
-	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-        lcd.print(chars[count]);	// tulostetaan kirjain
-        taulukko[loc]=chars[count];
-          
-        break;
-		
+
+          else if (locY == 0 && loc == 1) {
+
+            count = 0;
+            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+
+            break;
 
 
-	  }
-        else if(locY == 0 && loc == 2){
-	    
-	    count = 0;
-	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-        lcd.print(chars[count]);	// tulostetaan kirjain
-        taulukko[loc]=chars[count];
-          
-        break;
-		
+
+          } else if (locY == 0 && loc == 2) {
+
+            count = 0;
+            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+
+            break;
 
 
-	  }
-	  else if(locY == 0 && loc == 3){
-	    
-	    count = 0;
-	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-        lcd.print(chars[count]);	// tulostetaan kirjain
-        taulukko[loc]=chars[count];  
-        break;
-		
+
+          } else if (locY == 0 && loc == 3) {
+
+            count = 0;
+            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+            break;
 
 
-	  }
-	  else if(locY == 0 && loc == 4){
-	    
-	    count = 0;
-	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-        lcd.print(chars[count]);	// tulostetaan kirjain
-        taulukko[loc]=chars[count];
-        
-        break;
-		
+
+          } else if (locY == 0 && loc == 4) {
+
+            count = 0;
+            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+
+            break;
 
 
-	  }
-	  else if(locY == 0 && loc == 5){
-	    
-	    count = 0;
-	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
-        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
-        lcd.print(chars[count]);	// tulostetaan kirjain
-        taulukko[loc]=chars[count];
-          
-        break;
-		
+
+          } else if (locY == 0 && loc == 5) {
+
+            count = 0;
+            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
+            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
+            lcd.print(chars[count]);   // tulostetaan kirjain
+            taulukko[loc] = chars[count];
+
+            break;
 
 
-	  }	
-		
-        //Jos kursori alarivillä SUBMIT-kohdassa, siirrytään yläriville nimisarakkeen loppuun
-        else if(locY == 1 && loc == 12){
-          loc = 5;
-          locY = 0;
-          lcd.setCursor(loc, locY);
-        }
-        //Kursori muualla, siirrytään yläriville
-        else{
-          locY = 0;
-          lcd.setCursor(loc, locY);
-        }
+
+          }
+
+          //Jos kursori alarivillä SUBMIT-kohdassa, siirrytään yläriville nimisarakkeen loppuun
+          else if (locY == 1 && loc == 12) {
+            loc = 5;
+            locY = 0;
+            lcd.setCursor(loc, locY);
+          }
+          //Kursori muualla, siirrytään yläriville
+          else {
+            locY = 0;
+            lcd.setCursor(loc, locY);
+          }
           break;
 
           //RIGHT-painikkeen toiminnot
         case 2:
+#ifdef DEBUG
           Serial.println("RIGHT has been pressed during input");
+#endif
           count == 0;
 
-        //Jos kursori nimisarakkeen päässä, siirretään laskuri nollaan ja kursori alkuun
-        if(loc == 5 && locY == 0){
-          loc = 0;
-          lcd.setCursor(loc, locY);
-        }
-        //Jos kursori on ylärivillä, siirrä askel oikealle
-        else if(locY == 0){
-          loc++;
-          lcd.setCursor(loc, locY);
-          
+          //Jos kursori nimisarakkeen päässä, siirretään laskuri nollaan ja kursori alkuun
+          if (loc == 5 && locY == 0) {
+            loc = 0;
+            lcd.setCursor(loc, locY);
+          }
+          //Jos kursori on ylärivillä, siirrä askel oikealle
+          else if (locY == 0) {
+            loc++;
+            lcd.setCursor(loc, locY);
+
+            break;
+          }
+          //Jos kursori alarivillä CANCEL-painikkeen kohdalla, siirretään kohtaan SUBMIT
+          else if (locY == 1 && loc == 5) {
+            loc = loc + 5;
+            lcd.setCursor(10, 2);
+            break;
+          }
+          //Jos kursori alarivillä SUBMIT-painikkeen kohdalla, ns. älä tee mitään
+          else if (locY == 1 && loc == 12) {
+            //lcd.setCursor(loc, locY);
+            break;
+          }
+
           break;
-      	}
-        //Jos kursori alarivillä CANCEL-painikkeen kohdalla, siirretään kohtaan SUBMIT
-        else if(locY == 1 && loc == 5){
-          loc = loc + 5;
-          lcd.setCursor(10, 2);
-          break;
-        }
-        //Jos kursori alarivillä SUBMIT-painikkeen kohdalla, ns. älä tee mitään
-        else if(locY == 1 && loc == 12){
-          //lcd.setCursor(loc, locY);
-          break;
-        }
-        
-       	break;
-        
-        
-		//DOWN-painikkeen toiminnot
+
+
+          //DOWN-painikkeen toiminnot
         case 3:
+#ifdef DEBUG
           Serial.println("DOWN has been pressed during input");
-        //Kirjaimen valinta taaksepäin, jos kirjaimet char-taulukon alussa, siirry loppuun
-        if(count == 26 || count <= 0){
+#endif
+          //Kirjaimen valinta taaksepäin, jos kirjaimet char-taulukon alussa, siirry loppuun
+          if (count == 26 || count <= 0) {
             count = 26;
           }
-          count = count - 1;		//kirjainlaskuria taaksepäin
-          lcd.setCursor(loc, 0);	//asetetaan sarake, johon tulostetaan
-          lcd.print(chars[count]);	//tulostetaan kirjain
-          taulukko[loc]=chars[count];
+          count = count - 1;        //kirjainlaskuria taaksepäin
+          lcd.setCursor(loc, 0);    //asetetaan sarake, johon tulostetaan
+          lcd.print(chars[count]);  //tulostetaan kirjain
+          taulukko[loc] = chars[count];
 
           break;
           //LEFT-painikkeen toiminnot
         case 4:
+#ifdef DEBUG
           Serial.println("LEFT has been pressed during input");
+#endif
 
-        //Jos kursori nimisarakkeen alussa, siirrä loppuun
-        if(loc == 0 && locY == 0){
-          loc = 5;
-        }
-        //Jos kursori alarivillä, SUBMIT-painikkeen kohdalla, siirrä kohtaan CANCEL
-        else if(locY == 1 && loc == 12){
-          loc = loc - 7;
-          lcd.setCursor(loc, locY);
+          //Jos kursori nimisarakkeen alussa, siirrä loppuun
+          if (loc == 0 && locY == 0) {
+            loc = 5;
+          }
+          //Jos kursori alarivillä, SUBMIT-painikkeen kohdalla, siirrä kohtaan CANCEL
+          else if (locY == 1 && loc == 12) {
+            loc = loc - 7;
+            lcd.setCursor(loc, locY);
+            break;
+          }
+          //Jos kursori alarivillä, CANCEL-painikkeen kohdalla, ns. älä tee mitään
+          else if (locY == 1 && loc == 5) {
+            //lcd.setCursor(loc, locY);
+            break;
+          }
+          //Muuten siirrä kursoria askel taaksepäin
+          else if (locY == 0) {
+            loc = loc - 1;
+            lcd.setCursor(loc, locY);
+          }
           break;
-        }
-        //Jos kursori alarivillä, CANCEL-painikkeen kohdalla, ns. älä tee mitään
-        else if(locY == 1 && loc == 5){
-          //lcd.setCursor(loc, locY);
-          break;
-        }
-        //Muuten siirrä kursoria askel taaksepäin
-        else if(locY == 0){
-          loc = loc - 1;
-          lcd.setCursor(loc, locY);
-        } 
-          break;
-		//SELECT-painikkeen toiminnot, toisin sanoen siirry alariville
+          //SELECT-painikkeen toiminnot, toisin sanoen siirry alariville
 
         case 5:
+#ifdef DEBUG
           Serial.println("SELECT has been pressed during input");
-        if(locY == 0){
-          locY++;
+#endif
+          if (locY == 0) {
+            locY++;
 
-          loc = 5;
-          lcd.setCursor(loc, locY);  //siirretään alariville kursori
-          //Serial.println(loc, locY); for testing purposes only
-          for(int asd =  0;asd < 6; asd++){	//tulostetaan sarjaväylälle kirjoitettu nimi
-          	if(taulukko[asd] !='@'){
-            	Serial.print(taulukko[asd]);
-          	}
-          	else Serial.print(' ');
-       
+            loc = 5;
+            lcd.setCursor(loc, locY);  //siirretään alariville kursori
+            //Serial.println(loc, locY); for testing purposes only
+            for (int asd = 0; asd < 6; asd++) {  //tulostetaan sarjaväylälle kirjoitettu nimi
+              if (taulukko[asd] != '@') {
+                Serial.print(taulukko[asd]);
+              } else Serial.print(' ');
+            }
+            break;
           }
-         break; 
-        }
-        
-        
-        //Serial.println(taulukko);
-        if (locY == 1 && loc  == 5){  //Jos kursori CANCEL-kohdassa, resetoi painamalla
-          
-          gameReset();
-        }
-          
-        else if(locY == 1 && loc == 10){ //Jos kursori SUBMIT-kohdassa, resetoi painamalla
-         gameReset(); 
+
+
+          //Serial.println(taulukko);
+          if (locY == 1 && loc == 5) {  //Jos kursori CANCEL-kohdassa, resetoi painamalla
+
+            gameReset();
+          }
+
+          else if (locY == 1 && loc == 10) {  //Jos kursori SUBMIT-kohdassa, resetoi painamalla
+            gameReset();
+            break;
+          }
           break;
-        }
-       	break;
         default:
+#ifdef DEBUG
           Serial.println("error during button press during input");
+#endif
           break;
-      
-      while (buttonPress() != 0) {
-        //inputCleared = true;
+
+          while (buttonPress() != 0) {
+            //inputCleared = true;
+          }
       }
-      
+
+      lcd.noBlink();
     }
-
-  lcd.noBlink();
-}
-  
-}
+  }
 }
 
+//restarts the game by reassigning starting numbers, zeroing flags, counters, clearing screen etc.
 void gameReset(void) {
-  lcd.clear();
   startTime = 0;
   endTime = 0;
   finalTime = 0;
+
   //fill array with zeros
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -769,32 +864,38 @@ void gameReset(void) {
 
   //setup(); //this alone works for about 4 games and then the board supposedly runs out of memory
 
-  //new attempt
+#ifdef DEBUG
+  //randomStartingNumbers();
+#else
   //give 4 starting numbers from 1 to 4 at random positions
   randomStartingNumbers();
+#endif
 
-  // lcd.init();
-  // lcd.backlight();
-  lcd.clear();
+  lcd.clear();  //clear the screen
 
+  //print starting numbers
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       if (numberGrid[i][j] != 0) {
-        lcd.print(numberGrid[i][j]);
+        lcd.write(byte(numberGrid[i][j]));  //prints inverted numbers
       } else {
         lcd.print(" ");
       }
     }
     lcd.setCursor(0, i + 1);
   }
+
+  //print side menu
   lcd.rightToLeft();
-  lcd.setCursor(13, 0);
+  lcd.setCursor(17, 0);
   lcd.print("teseR");
-  lcd.setCursor(13, 1);
+  lcd.setCursor(17, 1);
   lcd.print("serocS");
   lcd.leftToRight();
 
-  lcd.setCursor(cursorX, cursorY);
+  lcd.setCursor(cursorX, cursorY);  //set cursor to default / last position
 
-  lcd.cursor();
+  lcd.cursor();  //enable cursor
+
+  startTime = millis();
 }
