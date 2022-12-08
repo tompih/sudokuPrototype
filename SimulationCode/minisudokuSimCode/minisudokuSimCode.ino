@@ -5,6 +5,7 @@
 
 
 unsigned long myTime;
+
 const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};  //add any additional characters
 
 
@@ -469,30 +470,31 @@ int numberValidityCheck(int gridNums[4][4]) {
 }
 
 void gameVictory(void) {
-  {
   Serial.println("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
-//laskurit liikkumista ja koordinaatteja varten
+  //laskurit liikkumista ja koordinaatteja varten
   int count = -1;
   int loc = 0;
   int locY = 0;
-//tulostetaan voiton onnittelut 
-  lcd.begin(16,2);
+  //tulostetaan voiton onnittelut
+  lcd.begin(16, 2);
   lcd.print("YOU WON!");
-  lcd.setCursor(2,4);
+  lcd.setCursor(2, 4);
   delay(1000);
   lcd.clear();
   lcd.print("GIVE PLAYER NAME");
-  delay(1000);   
-//tulostetaan nimensyöttönäkymä ja peruutus/submit painikkeet 
+  delay(1000);
+  //tulostetaan nimensyöttönäkymä ja peruutus/submit painikkeet
   lcd.clear();
   lcd.print("______");
   lcd.setCursor(0, 1);
   lcd.print("cancel    submit");
   lcd.setCursor(0, 0);
-  lcd.blink();  
+
+  lcd.blink();
   
   //Painikkeiden painallusten toiminnot
-  while (buttonPress()) {
+  while (buttonPress() != 0) {
+
   }
   lcd.blink();
   bool inputCleared = false;
@@ -504,6 +506,7 @@ void gameVictory(void) {
         cursorX = 0;
         cursorY = 0;
         case 1:
+
         Serial.println("UP has been pressed during input");
         //Kirjaimen valinta, jos kursori ylärivillä
         if(locY == 0){										//hypätään kirjainten alkuun, jos lopussa
@@ -610,11 +613,12 @@ void gameVictory(void) {
           lcd.setCursor(loc, locY);
         }
           break;
-     
-		//RIGHT-painikkeen toiminnot
+
+          //RIGHT-painikkeen toiminnot
         case 2:
           Serial.println("RIGHT has been pressed during input");
           count == 0;
+
         //Jos kursori nimisarakkeen päässä, siirretään laskuri nollaan ja kursori alkuun
         if(loc == 5 && locY == 0){
           loc = 0;
@@ -653,10 +657,12 @@ void gameVictory(void) {
           lcd.setCursor(loc, 0);	//asetetaan sarake, johon tulostetaan
           lcd.print(chars[count]);	//tulostetaan kirjain
           taulukko[loc]=chars[count];
+
           break;
-		//LEFT-painikkeen toiminnot
+          //LEFT-painikkeen toiminnot
         case 4:
           Serial.println("LEFT has been pressed during input");
+
         //Jos kursori nimisarakkeen alussa, siirrä loppuun
         if(loc == 0 && locY == 0){
           loc = 5;
@@ -679,10 +685,12 @@ void gameVictory(void) {
         } 
           break;
 		//SELECT-painikkeen toiminnot, toisin sanoen siirry alariville
+
         case 5:
           Serial.println("SELECT has been pressed during input");
         if(locY == 0){
           locY++;
+
           loc = 5;
           lcd.setCursor(loc, locY);  //siirretään alariville kursori
           //Serial.println(loc, locY); for testing purposes only
@@ -712,14 +720,13 @@ void gameVictory(void) {
           Serial.println("error during button press during input");
           break;
       
-      while (buttonPress()) {
+      while (buttonPress() != 0) {
         //inputCleared = true;
       }
       
     }
 
   lcd.noBlink();
- 
 }
   
 }
