@@ -2,9 +2,10 @@
 
 //comment this out to disable debug messages to serial monitor
 //#define DEBUG
+unsigned long startTime;
+unsigned long endTime;
+unsigned long finalTime;
 
-
-unsigned long myTime;
 
 const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};  //add any additional characters
 
@@ -61,6 +62,8 @@ void setup() {
   lcd.backlight();
   lcd.clear();
 
+  startTime = millis();
+	
   pinMode(keyUp, INPUT_PULLUP);
   pinMode(keyRight, INPUT_PULLUP);
   pinMode(keyDown, INPUT_PULLUP);
@@ -470,16 +473,27 @@ int numberValidityCheck(int gridNums[4][4]) {
 }
 
 void gameVictory(void) {
+  endTime = millis();
+  finalTime = (endTime - startTime); 
+  Serial.print("Time:"); 
+  Serial.println(finalTime/1000); 
+
+  
   Serial.println("YOU WON!!!!!!!!!!!!!!!!!!!!!!\n");
-  //laskurit liikkumista ja koordinaatteja varten
+//laskurit liikkumista ja koordinaatteja varten
   int count = -1;
   int loc = 0;
   int locY = 0;
-  //tulostetaan voiton onnittelut
-  lcd.begin(16, 2);
+//tulostetaan voiton onnittelut 
+  lcd.begin(16,2);
   lcd.print("YOU WON!");
-  lcd.setCursor(2, 4);
-  delay(1000);
+ lcd.setCursor(0,1);
+  lcd.print("TIME:");
+  lcd.setCursor(7,1);
+  lcd.print(finalTime/1000);
+  lcd.setCursor(9,1);
+  lcd.print("SEC");
+  delay(5000);
   lcd.clear();
   lcd.print("GIVE PLAYER NAME");
   delay(1000);
@@ -734,7 +748,9 @@ void gameVictory(void) {
 
 void gameReset(void) {
   lcd.clear();
-
+  startTime = 0;
+  endTime = 0;
+  finalTime = 0;
   //fill array with zeros
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
