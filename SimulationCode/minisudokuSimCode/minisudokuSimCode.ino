@@ -1,7 +1,7 @@
 #include <LiquidCrystal_I2C.h>
 
 //comment this out to disable debug messages to serial monitor
-//#define DEBUG
+#define DEBUG
 
 unsigned long startTime;
 unsigned long endTime;
@@ -845,12 +845,10 @@ void gameReset(void) {
   }
 
 #ifdef DEBUG
-  numberGrid = {
-    { 1, 3, 0, 4 },
-    { 4, 2, 3, 1 },
-    { 3, 4, 1, 2 },
-    { 2, 1, 4, 3 }
-  };
+  numberGrid[0][0] = 1; numberGrid[0][1] = 3; numberGrid[0][2] = 0; numberGrid[0][3] = 4;
+  numberGrid[1][0] = 4; numberGrid[1][1] = 2; numberGrid[1][2] = 3; numberGrid[1][3] = 1;
+  numberGrid[2][0] = 3; numberGrid[2][1] = 4; numberGrid[2][2] = 1; numberGrid[2][3] = 2;
+  numberGrid[3][0] = 2; numberGrid[3][1] = 1; numberGrid[3][2] = 4; numberGrid[3][3] = 3;
 #endif
 
 #ifdef DEBUG
