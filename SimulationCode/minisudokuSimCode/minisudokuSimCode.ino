@@ -29,16 +29,7 @@ const int keySelect = 6;
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 //table for our grid
-int numberGrid[4][4] = {
-#ifdef DEBUG
-  { 1, 3, 0, 4 },
-  { 4, 2, 3, 1 },
-  { 3, 4, 1, 2 },
-  { 2, 1, 4, 3 }
-#else
-  0
-#endif
-};
+int numberGrid[4][4] = { 0 };
 
 //table for starting position tracking
 int startingNumPos[4][2] = {
@@ -852,6 +843,15 @@ void gameReset(void) {
       numberGrid[i][j] = 0;
     }
   }
+
+#ifdef DEBUG
+  numberGrid = {
+    { 1, 3, 0, 4 },
+    { 4, 2, 3, 1 },
+    { 3, 4, 1, 2 },
+    { 2, 1, 4, 3 }
+  };
+#endif
 
 #ifdef DEBUG
   for (int i = 0; i < 4; i++) {
