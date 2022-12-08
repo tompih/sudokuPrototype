@@ -5,7 +5,8 @@
 
 
 unsigned long myTime;
-const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '.', ',', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };  //add any additional characters
+
+const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};  //add any additional characters
 
 
 int charindex = 0;
@@ -490,8 +491,10 @@ void gameVictory(void) {
   lcd.setCursor(0, 0);
 
   lcd.blink();
-
+  
+  //Painikkeiden painallusten toiminnot
   while (buttonPress() != 0) {
+
   }
   lcd.blink();
   bool inputCleared = false;
@@ -500,113 +503,233 @@ void gameVictory(void) {
     if (buttonPress() != 0) {
       switch (buttonPress()) {
         //UP painikkeen toiminnot
+        cursorX = 0;
+        cursorY = 0;
         case 1:
-          Serial.println("UP has been pressed during input");
-          //Kirjaimen valinta, jos kursori ylärivillä
-          if (locY == 0) {  //hypätään kirjainten alkuun, jos lopussa
-            if (count == sizeof(chars) / sizeof(char) - 1) {
-              count = -1;
-            }
-            count = count + 1;         //kirjaimen valintalaskuri eteenpäin
-            lcd.setCursor(loc, locY);  // asetetaan sarake, johon tulostetaan
-            lcd.print(chars[count]);   // tulostetaan kirjain
-            break;
+
+        Serial.println("UP has been pressed during input");
+        //Kirjaimen valinta, jos kursori ylärivillä
+        if(locY == 0){										//hypätään kirjainten alkuun, jos lopussa
+          
+          if(count == sizeof(chars) / sizeof(char) - 1){
+            count = -1;
+            
           }
-          //Jos kursori alarivillä SUBMIT-kohdassa, siirrytään yläriville nimisarakkeen loppuun
-          else if (locY == 1 && loc == 12) {
-            loc = 5;
-            locY = 0;
-            lcd.setCursor(loc, locY);
-          }
-          //Kursori muualla, siirrytään yläriville
-          else {
-            locY = 0;
-            lcd.setCursor(loc, locY);
-          }
+          count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+          lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+          lcd.print(chars[count]);	// tulostetaan kirjain
+          taulukko[loc]=chars[count];
+          
+          break;
+        }
+	  else if(locY == 0 && loc == 0){
+        
+		
+	    count = 0;		
+	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+        
+        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+        lcd.print(chars[count]);	// tulostetaan kirjain
+        taulukko[loc]=chars[count];
+          
+          
+          break;
+	  }
+		
+	  else if(locY == 0 && loc == 1){
+	    
+	    count = 0;
+	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+        lcd.print(chars[count]);	// tulostetaan kirjain
+        taulukko[loc]=chars[count];
+          
+        break;
+		
+
+
+	  }
+        else if(locY == 0 && loc == 2){
+	    
+	    count = 0;
+	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+        lcd.print(chars[count]);	// tulostetaan kirjain
+        taulukko[loc]=chars[count];
+          
+        break;
+		
+
+
+	  }
+	  else if(locY == 0 && loc == 3){
+	    
+	    count = 0;
+	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+        lcd.print(chars[count]);	// tulostetaan kirjain
+        taulukko[loc]=chars[count];  
+        break;
+		
+
+
+	  }
+	  else if(locY == 0 && loc == 4){
+	    
+	    count = 0;
+	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+        lcd.print(chars[count]);	// tulostetaan kirjain
+        taulukko[loc]=chars[count];
+        
+        break;
+		
+
+
+	  }
+	  else if(locY == 0 && loc == 5){
+	    
+	    count = 0;
+	    count = count + 1;	//kirjaimen valintalaskuri eteenpäin
+        lcd.setCursor(loc, locY); // asetetaan sarake, johon tulostetaan
+        lcd.print(chars[count]);	// tulostetaan kirjain
+        taulukko[loc]=chars[count];
+          
+        break;
+		
+
+
+	  }	
+		
+        //Jos kursori alarivillä SUBMIT-kohdassa, siirrytään yläriville nimisarakkeen loppuun
+        else if(locY == 1 && loc == 12){
+          loc = 5;
+          locY = 0;
+          lcd.setCursor(loc, locY);
+        }
+        //Kursori muualla, siirrytään yläriville
+        else{
+          locY = 0;
+          lcd.setCursor(loc, locY);
+        }
           break;
 
           //RIGHT-painikkeen toiminnot
         case 2:
           Serial.println("RIGHT has been pressed during input");
           count == 0;
-          //Jos kursori nimisarakkeen päässä, siirretään laskuri nollaan
-          if (loc == 5) {
-            loc = 0;
-          }
-          //Jos kursori alarivillä CANCEL-painikkeen kohdalla, siirretään kohtaan SUBMIT
-          else if (locY == 1 && loc == 2) {
-            loc = 12;
-            lcd.setCursor(loc, locY);
-          }
-          //Jos kursori alarivillä SUBMIT-painikkeen kohdalla, ns. älä tee mitään
-          else if (locY == 1 && loc == 12) {
-            lcd.setCursor(loc, locY);
-          }
-          //Jos kursori on ylärivillä, siirrä askel oikealle
-          else {
-            loc++;
-            lcd.setCursor(loc, locY);
-          }
 
+        //Jos kursori nimisarakkeen päässä, siirretään laskuri nollaan ja kursori alkuun
+        if(loc == 5 && locY == 0){
+          loc = 0;
+          lcd.setCursor(loc, locY);
+        }
+        //Jos kursori on ylärivillä, siirrä askel oikealle
+        else if(locY == 0){
+          loc++;
+          lcd.setCursor(loc, locY);
+          
           break;
-          //DOWN-painikkeen toiminnot
+      	}
+        //Jos kursori alarivillä CANCEL-painikkeen kohdalla, siirretään kohtaan SUBMIT
+        else if(locY == 1 && loc == 5){
+          loc = loc + 5;
+          lcd.setCursor(10, 2);
+          break;
+        }
+        //Jos kursori alarivillä SUBMIT-painikkeen kohdalla, ns. älä tee mitään
+        else if(locY == 1 && loc == 12){
+          //lcd.setCursor(loc, locY);
+          break;
+        }
+        
+       	break;
+        
+        
+		//DOWN-painikkeen toiminnot
         case 3:
           Serial.println("DOWN has been pressed during input");
-          //Kirjaimen valinta taaksepäin, jos kirjaimet char-taulukon alussa, siirry loppuun
-          if (count == 38 || count <= 0) {
-            count = 38;
+        //Kirjaimen valinta taaksepäin, jos kirjaimet char-taulukon alussa, siirry loppuun
+        if(count == 26 || count <= 0){
+            count = 26;
           }
-          count = count - 1;        //kirjainlaskuria taaksepäin
-          lcd.setCursor(loc, 0);    //asetetaan sarake, johon tulostetaan
-          lcd.print(chars[count]);  //tulostetaan kirjain
+          count = count - 1;		//kirjainlaskuria taaksepäin
+          lcd.setCursor(loc, 0);	//asetetaan sarake, johon tulostetaan
+          lcd.print(chars[count]);	//tulostetaan kirjain
+          taulukko[loc]=chars[count];
+
           break;
           //LEFT-painikkeen toiminnot
         case 4:
           Serial.println("LEFT has been pressed during input");
-          //Jos kursori nimisarakkeen alussa, siirrä loppuun
-          if (loc == 0) {
-            loc = 5;
-          }
-          //Jos kursori alarivillä, SUBMIT-painikkeen kohdalla, siirrä kohtaan CANCEL
-          else if (locY == 1 && loc == 12) {
-            loc = 2;
-            lcd.setCursor(loc, locY);
 
-          }
-          //Jos kursori alarivillä, CANCEL-painikkeen kohdalla, ns. älä tee mitään
-          else if (locY == 1 && loc == 2) {
-            lcd.setCursor(loc, locY);
-
-          }
-          //Muuten siirrä kursoria askel taaksepäin
-          else {
-            loc = loc - 1;
-            lcd.setCursor(loc, locY);
-          }
+        //Jos kursori nimisarakkeen alussa, siirrä loppuun
+        if(loc == 0 && locY == 0){
+          loc = 5;
+        }
+        //Jos kursori alarivillä, SUBMIT-painikkeen kohdalla, siirrä kohtaan CANCEL
+        else if(locY == 1 && loc == 12){
+          loc = loc - 7;
+          lcd.setCursor(loc, locY);
           break;
-          //SELECT-painikkeen toiminnot, toisin sanoen siirry alariville
+        }
+        //Jos kursori alarivillä, CANCEL-painikkeen kohdalla, ns. älä tee mitään
+        else if(locY == 1 && loc == 5){
+          //lcd.setCursor(loc, locY);
+          break;
+        }
+        //Muuten siirrä kursoria askel taaksepäin
+        else if(locY == 0){
+          loc = loc - 1;
+          lcd.setCursor(loc, locY);
+        } 
+          break;
+		//SELECT-painikkeen toiminnot, toisin sanoen siirry alariville
+
         case 5:
           Serial.println("SELECT has been pressed during input");
+        if(locY == 0){
           locY++;
-          lcd.setCursor(2, locY);
-          if (locY == 2 && loc == 0) {
 
-            gameReset();
+          loc = 5;
+          lcd.setCursor(loc, locY);  //siirretään alariville kursori
+          //Serial.println(loc, locY); for testing purposes only
+          for(int asd =  0;asd < 6; asd++){	//tulostetaan sarjaväylälle kirjoitettu nimi
+          	if(taulukko[asd] !='@'){
+            	Serial.print(taulukko[asd]);
+          	}
+          	else Serial.print(' ');
+       
           }
+         break; 
+        }
+        
+        
+        //Serial.println(taulukko);
+        if (locY == 1 && loc  == 5){  //Jos kursori CANCEL-kohdassa, resetoi painamalla
+          
+          gameReset();
+        }
+          
+        else if(locY == 1 && loc == 10){ //Jos kursori SUBMIT-kohdassa, resetoi painamalla
+         gameReset(); 
           break;
-
-
-          //virheviesti
+        }
+       	break;
         default:
           Serial.println("error during button press during input");
           break;
-      }
+      
       while (buttonPress() != 0) {
+        //inputCleared = true;
       }
-      //inputCleared = true;
+      
     }
-  }
+
   lcd.noBlink();
+}
+  
+}
 }
 
 void gameReset(void) {
