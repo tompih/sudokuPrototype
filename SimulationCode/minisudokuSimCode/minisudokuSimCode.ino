@@ -591,10 +591,14 @@ int numberValidityCheck(int gridNums[4][4]) {
 //game victory sequence
 void gameVictory(void) {
   endTime = millis();
-  finalTime = (endTime - startTime);
+  finalTime = (endTime - startTime) / 1000;
+  playerScore -= 12 * 5;     //subtract minimum penalty from score
+  playerScore += finalTime;  //add time to score
 #ifdef DEBUG
-  Serial.print("Time:");
-  Serial.println(finalTime / 1000);
+  Serial.print("Time: ");
+  Serial.println(finalTime);
+  Serial.print("Penalty: ");
+  Serial.println(playerScore - finalTime);
 #endif
 
 #ifdef DEBUG
@@ -610,7 +614,7 @@ void gameVictory(void) {
   lcd.setCursor(0, 1);
   lcd.print("score:");
   lcd.setCursor(6, 1);
-  lcd.print(finalTime / 1000);
+  lcd.print(playerScore);
   delay(5000);
   lcd.clear();
   lcd.print("GIVE PLAYER NAME");
