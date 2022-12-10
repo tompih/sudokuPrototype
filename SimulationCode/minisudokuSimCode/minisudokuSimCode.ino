@@ -10,8 +10,8 @@ unsigned long finalTime = 0;
 
 int playerScore = 0;    // this will be time + penalty, par scoring
 
-const char chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };  //add any additional characters
-char taulukko[6] = { '@', '@', '@', '@', '@', '@' };
+const char chars[] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',};  //add any additional characters
+char taulukko[6] = { ' ', ' ', ' ', ' ', ' ', ' ' };
 int rawData[27] = { 0 };  //store data from eeprom here first to do sorting and such with it
 
 int charindex = 0;
@@ -577,7 +577,6 @@ void gameVictory(void) {
   int loc = 0;
   int locY = 0;
   //tulostetaan voiton onnittelut
-  lcd.begin(16, 2);
   lcd.print("YOU WON!");
   lcd.setCursor(0, 1);
   lcd.print("score:");
@@ -621,7 +620,7 @@ void gameVictory(void) {
             //break;
           }
           //Kirjaimen valinta eteenpäin, jos kirjaimet char-taulukon lopussa, siirry alkuun
-          else if (count != 25) {
+          else if (count != 26) {
             
 
             count = count + 1;         //kirjainlaskuria eteenpäin
@@ -703,7 +702,7 @@ void gameVictory(void) {
           } 
           
           else {
-            count = 25;
+            count = 26;
 
             lcd.setCursor(loc, locY);  //asetetaan sarake, johon tulostetaan
             lcd.print(chars[count]);   //tulostetaan kirjain
@@ -764,7 +763,7 @@ void gameVictory(void) {
             lcd.setCursor(loc, locY);  //siirretään alariville kursori
             //Serial.println(loc, locY); for testing purposes only
             for (int asd = 0; asd < 6; asd++) {  //tulostetaan sarjaväylälle kirjoitettu nimi
-              if (taulukko[asd] != '@') {
+              if (taulukko[asd] != ' ') {
                 Serial.print(taulukko[asd]);
               } else Serial.print(' ');
             }
