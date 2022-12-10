@@ -429,7 +429,8 @@ void sideMenu(void) {
           if (sideMenuPosition == 0) {
             gameReset();  //reset the game
           } else {
-            //show highscores
+            playerScore = 9999;  //make player score so high it won't beat any existing ones
+            highscoreSystem();   //show highscores
           }
           inputCleared = true;  //we can set this to true if input was not up or down
           break;
@@ -825,12 +826,18 @@ void gameReset(void) {
   startTime = 0;
   endTime = 0;
   finalTime = 0;
+  playerScore = 0;
 
   //fill array with zeros
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       numberGrid[i][j] = 0;
     }
+  }
+
+  //fill name array with spaces
+  for (int i = 0; i < 6; i++) {
+    taulukko[i] = ' ';
   }
 
 #ifdef DEBUG
