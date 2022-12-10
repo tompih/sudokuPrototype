@@ -1,15 +1,18 @@
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 
 //comment this out to disable debug messages to serial monitor
 #define DEBUG
 
-unsigned long startTime;
-unsigned long endTime;
-unsigned long finalTime;
+unsigned long startTime = 0;
+unsigned long endTime = 0;
+unsigned long finalTime = 0;
 
+int playerScore = 0;    // this will be time + penalty, par scoring
 
 const char chars[] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',};  //add any additional characters
 char taulukko[6] = { ' ', ' ', ' ', ' ', ' ', ' ' };
+int rawData[27] = { 0 };  //store data from eeprom here first to do sorting and such with it
 
 int charindex = 0;
 int buttonState1 = 0;
@@ -323,6 +326,10 @@ void inputNumber(void) {
     }
   }
   lcd.noBlink();  //disable blinking cursor
+
+  playerScore += 5; //add 5 seconds to player time each select input
+      //12 inputs is the minimum amount so
+      //subtract 12 * 5 at the end to award player with 0 penalty
 }
 
 //input system while in side menu
@@ -794,22 +801,11 @@ void gameReset(void) {
   }
 
 #ifdef DEBUG
-  numberGrid[0][0] = 1;
-  numberGrid[0][1] = 3;
-  numberGrid[0][2] = 0;
-  numberGrid[0][3] = 4;
-  numberGrid[1][0] = 4;
-  numberGrid[1][1] = 2;
-  numberGrid[1][2] = 3;
-  numberGrid[1][3] = 1;
-  numberGrid[2][0] = 3;
-  numberGrid[2][1] = 4;
-  numberGrid[2][2] = 1;
-  numberGrid[2][3] = 2;
-  numberGrid[3][0] = 2;
-  numberGrid[3][1] = 1;
-  numberGrid[3][2] = 4;
-  numberGrid[3][3] = 3;
+  //debug grid
+  numberGrid[0][0] = 1; numberGrid[0][1] = 3; numberGrid[0][2] = 0; numberGrid[0][3] = 4;
+  numberGrid[1][0] = 4; numberGrid[1][1] = 2; numberGrid[1][2] = 3; numberGrid[1][3] = 1;
+  numberGrid[2][0] = 3; numberGrid[2][1] = 4; numberGrid[2][2] = 1; numberGrid[2][3] = 2;
+  numberGrid[3][0] = 2; numberGrid[3][1] = 1; numberGrid[3][2] = 4; numberGrid[3][3] = 3;
 #endif
 
 #ifdef DEBUG
@@ -857,4 +853,278 @@ void gameReset(void) {
   lcd.cursor();  //enable cursor
 
   startTime = millis();
+}
+
+//EEPROM / highscore management
+void highscoreSystem() {
+#ifdef DEBUG
+  Serial.println("Begin highscores...");
+#endif
+
+  getFromEEPROM();
+
+  parseScores();
+
+  sortTable();
+
+  if (compareScoreToTable() == 1) {
+    overwriteWorstScore();
+  }
+
+  sortTable();
+
+  printTable();
+
+#ifdef DEBUG
+  Serial.println("End highscores...");
+#endif
+}
+
+//get names from EEPROM addresses to the array
+void getFromEEPROM() {
+#ifdef DEBUG
+  Serial.println("Begin getFromEEPROM...");
+#endif
+
+  //read from data at ith address in eeprom and put it in our runtime table
+  for (int i = 0; i < 27; i++) {
+    rawData[i] = EEPROM.read(i);  //get one byte from address i
+  }
+
+#ifdef DEBUG
+  for (int i = 0; i < 27; i++) {
+    Serial.print(rawData[i]);
+  }
+#endif
+
+#ifdef DEBUG
+  Serial.println("End getFromEEPROM...");
+#endif
+}
+
+void parseScores() {
+#ifdef DEBUG
+  Serial.println("Begin parseScores...");
+#endif
+
+  for (int i = 1; i < 4; i++) {
+    int sum = 0;
+    int multiplier = 100;
+    for (int j = 3; j > 0; j--) {
+      //for example 2 * 9 - 3 = 15 which is the highest digit for the second score
+      sum += rawData[i * 9 - j] * multiplier;  //multiplier starts from hundreds
+      multiplier /= 10;                        //and keeps going down
+    }
+    rawData[i * 9 - 3] = sum;  //put whole parsed number to 7th place
+    rawData[i * 9 - 2] = i;    //index score
+  }
+
+#ifdef DEBUG
+  for (int i = 1; i < 4; i++) {
+    Serial.print(rawData[i * 9 - 2]);
+    Serial.print(". : ");
+    Serial.println(rawData[i * 9 - 3]);
+  }
+#endif
+
+#ifdef DEBUG
+  Serial.println("End parseScores...");
+#endif
+}
+
+//returns how many existing scores the player's score beats
+int compareScoreToTable() {
+#ifdef DEBUG
+  Serial.println("Begin compareScoreToTable...");
+#endif
+
+  int betterThan = 0;
+
+  //check if any existing score is worse than player's score
+  for (int i = 1; i < 4; i++) {
+#ifdef DEBUG
+    Serial.print(rawData[i * 9 - 3]);
+    Serial.print(" > ");
+    Serial.print(playerScore);
+    Serial.println(" ? ");
+#endif
+    if (rawData[i * 9 - 3] > playerScore) {
+
+      betterThan = 1;
+    }
+  }
+
+#ifdef DEBUG
+  Serial.println("End compareScoreToTable...");
+#endif
+
+  return betterThan;
+}
+
+//replace worst score in table and also send it to EEPROM
+void overwriteWorstScore() {
+#ifdef DEBUG
+  Serial.println("Begin overwriteWorstScore...");
+#endif
+
+  //overwrite name
+  for (int k = 6; k > 0; k--) {
+    rawData[3 * 9 - 3 - k] = taulukko[6 - k];
+
+    //index * 9 - numberrange - k
+    EEPROM.update((rawData[3 * 9 - 2] * 9 - 3 - k), rawData[3 * 9 - 3 - k]);
+  }
+
+  //overwrite score from table
+  rawData[3 * 9 - 3] = playerScore;
+
+  //unparse scores
+  int temp[3] = { 0 };
+  //for example
+  //273 - 73 = 200 / 100 = 2
+  //73 - 3 = 70 / 10 = 7
+  //3                = 3
+  temp[0] = ((playerScore) - (playerScore % 100)) / 100;
+  temp[1] = ((playerScore % 100) - (playerScore % 10)) / 10;
+  temp[2] = (playerScore % 10);
+
+#ifdef DEBUG
+  Serial.print("Overwriting: ");
+  for (int k = 0; k < 3; k++) {
+    Serial.print(EEPROM.read((rawData[3 * 9 - 2] * 9 - 3 + k)));
+  }
+  Serial.println("");
+  Serial.print("With: ");
+  for (int k = 0; k < 3; k++) {
+    Serial.print(temp[k]);
+  }
+  Serial.println("");
+#endif
+
+  //overwrite score from EEPROM
+  for (int k = 0; k < 3; k++) {
+    //index * 9 - numberrange + k
+    EEPROM.update((rawData[3 * 9 - 2] * 9 - 3 + k), temp[k]);
+  }
+
+#ifdef DEBUG
+  Serial.println("End overwriteWorstScore...");
+#endif
+}
+
+//bubblesort
+void sortTable() {
+#ifdef DEBUG
+  Serial.println("Begin sortTable...");
+#endif
+
+  int numbertemp = 0;
+  int nametemp[27] = { 0 };
+  for (int i = 1; i < 4; i++) {
+    for (int j = 1; j < 4; j++) {
+      if (rawData[j * 9 - 3] > rawData[i * 9 - 3]) {
+        //sort numbers
+        numbertemp = rawData[i * 9 - 3];
+        rawData[i * 9 - 3] = rawData[j * 9 - 3];
+        rawData[j * 9 - 3] = numbertemp;
+
+        //sort addresses
+        numbertemp = rawData[i * 9 - 2];
+        rawData[i * 9 - 2] = rawData[j * 9 - 2];
+        rawData[j * 9 - 2] = numbertemp;
+
+        //sort names
+        for (int k = 6; k > 0; k--) {
+          //for example 2 * 9 - 3 - 6 = 9 which is the start of second name
+          nametemp[k] = rawData[i * 9 - 3 - k];
+        }
+        for (int k = 6; k > 0; k--) {
+          rawData[i * 9 - 3 - k] = rawData[j * 9 - 3 - k];
+        }
+        for (int k = 6; k > 0; k--) {
+          rawData[j * 9 - 3 - k] = nametemp[k];
+        }
+      }
+    }
+  }
+
+#ifdef DEBUG
+  char ch = '\0';
+  for (int i = 1; i < 4; i++) {
+    Serial.print(rawData[i * 9 - 2]);
+    Serial.print(". address: ");
+    for (int k = 6; k > 0; k--) {
+      ch = rawData[i * 9 - 3 - k];
+      Serial.print(ch);
+    }
+    Serial.println(rawData[i * 9 - 3]);
+  }
+#endif
+
+#ifdef DEBUG
+  Serial.println("End sortTable...");
+#endif
+}
+
+
+
+
+
+void printTable() {
+
+
+  //Print table of names and scores
+  // lcd.setCursor(0, 0);
+  // lcd.print("High Scores");
+  // lcd.setCursor(0, 1);
+  // lcd.print("#1:");
+  // lcd.setCursor(0, 2);
+  // lcd.print("#2:");
+  // lcd.setCursor(0, 3);
+  // lcd.print("#3:");
+
+  // //1: henkilön score
+  // for (i = 0; i < 8; i++) {
+  //   lcd.setCursor(12, 1);
+  //   lcd.print(parsedNumbers[i]);
+  // }
+
+  // //2: henkilön score
+  // for (i = 0; i < 7; i++) {
+  //   lcd.setCursor(12, 2);
+  //   lcd.print(parsedNumbers[i]);
+  // }
+
+  // //3: henkilön score
+  // for (i = 0; i < 6; i++) {
+  //   lcd.setCursor(12, 3);
+  //   lcd.print(parsedNumbers[i]);
+  // }
+
+  // //1: henkilön nimi
+  // for (i = 0; i < 8; i++) {
+  //   for (int j = 0; j < 6; j++) {
+
+  //     lcd.setCursor(j + 3, 1);
+  //     lcd.print(namesAndNumbers[i][j]);  //print name
+  //   }
+  // }
+
+  // //2: henkilön nimi
+  // for (i = 0; i < 7; i++) {
+  //   for (int j = 0; j < 6; j++) {
+
+  //     lcd.setCursor(j + 3, 2);
+  //     lcd.print(namesAndNumbers[i][j]);  //print name
+  //   }
+  // }
+
+  // //3: henkilön nimi
+  // for (i = 0; i < 6; i++) {
+  //   for (int j = 0; j < 6; j++) {
+
+  //     lcd.setCursor(j + 3, 3);
+  //     lcd.print(namesAndNumbers[i][j]);  //print name
+  //   }
+  // }
 }
