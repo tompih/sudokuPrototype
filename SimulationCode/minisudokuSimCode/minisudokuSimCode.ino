@@ -8,9 +8,37 @@ unsigned long startTime = 0;
 unsigned long endTime = 0;
 unsigned long finalTime = 0;
 
-int playerScore = 0;    // this will be time + penalty, par scoring
+int playerScore = 0;  // this will be time + penalty, par scoring
 
-const char chars[] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',};  //add any additional characters
+const char chars[] = {
+  ' ',
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z',
+};  //add any additional characters
 char taulukko[6] = { ' ', ' ', ' ', ' ', ' ', ' ' };
 int rawData[27] = { 0 };  //store data from eeprom here first to do sorting and such with it
 
@@ -327,9 +355,9 @@ void inputNumber(void) {
   }
   lcd.noBlink();  //disable blinking cursor
 
-  playerScore += 5; //add 5 seconds to player time each select input
-      //12 inputs is the minimum amount so
-      //subtract 12 * 5 at the end to award player with 0 penalty
+  playerScore += 5;  //add 5 seconds to player time each select input
+                     //12 inputs is the minimum amount so
+                     //subtract 12 * 5 at the end to award player with 0 penalty
 }
 
 //input system while in side menu
@@ -577,6 +605,7 @@ void gameVictory(void) {
   int loc = 0;
   int locY = 0;
   //tulostetaan voiton onnittelut
+  lcd.clear();
   lcd.print("YOU WON!");
   lcd.setCursor(0, 1);
   lcd.print("score:");
@@ -612,7 +641,7 @@ void gameVictory(void) {
           Serial.println("UP has been pressed during input");
 #endif
           //Kirjaimen valinta, jos kursori ylärivillä
-          
+
           if (locY == 1) {
             loc = 0;
             locY = 0;
@@ -621,16 +650,16 @@ void gameVictory(void) {
           }
           //Kirjaimen valinta eteenpäin, jos kirjaimet char-taulukon lopussa, siirry alkuun
           else if (count != 26) {
-            
+
 
             count = count + 1;         //kirjainlaskuria eteenpäin
             lcd.setCursor(loc, locY);  //asetetaan sarake, johon tulostetaan
             lcd.print(chars[count]);   //tulostetaan kirjain
             lcd.setCursor(loc, locY);
             taulukko[loc] = chars[count];
-           // break;
-          } 
-          
+            // break;
+          }
+
           else {
             count = 0;
 
@@ -639,8 +668,8 @@ void gameVictory(void) {
             lcd.setCursor(loc, locY);
             taulukko[loc] = chars[count];
           }
-          
-      
+
+
 
           break;
 
@@ -691,16 +720,16 @@ void gameVictory(void) {
           }
           //Kirjaimen valinta taaksepäin, jos kirjaimet char-taulukon alussa, siirry loppuun
           else if (count != 0) {
-            
+
 
             count = count - 1;         //kirjainlaskuria taaksepäin
             lcd.setCursor(loc, locY);  //asetetaan sarake, johon tulostetaan
             lcd.print(chars[count]);   //tulostetaan kirjain
             lcd.setCursor(loc, locY);
             taulukko[loc] = chars[count];
-           // break;
-          } 
-          
+            // break;
+          }
+
           else {
             count = 26;
 
@@ -751,9 +780,9 @@ void gameVictory(void) {
             gameReset();
           }
 
-          else if (locY == 1 && loc == 15) {  //Jos kursori SUBMIT-kohdassa, resetoi painamalla
+          else if (locY == 1 && loc == 15) {  //Jos kursori SUBMIT-kohdassa, jatka highscoresysteemiin painamalla
             inputCleared = true;
-            gameReset();
+            highscoreSystem();
           }
 
           if (locY == 0) {
@@ -802,10 +831,22 @@ void gameReset(void) {
 
 #ifdef DEBUG
   //debug grid
-  numberGrid[0][0] = 1; numberGrid[0][1] = 3; numberGrid[0][2] = 0; numberGrid[0][3] = 4;
-  numberGrid[1][0] = 4; numberGrid[1][1] = 2; numberGrid[1][2] = 3; numberGrid[1][3] = 1;
-  numberGrid[2][0] = 3; numberGrid[2][1] = 4; numberGrid[2][2] = 1; numberGrid[2][3] = 2;
-  numberGrid[3][0] = 2; numberGrid[3][1] = 1; numberGrid[3][2] = 4; numberGrid[3][3] = 3;
+  numberGrid[0][0] = 1;
+  numberGrid[0][1] = 3;
+  numberGrid[0][2] = 0;
+  numberGrid[0][3] = 4;
+  numberGrid[1][0] = 4;
+  numberGrid[1][1] = 2;
+  numberGrid[1][2] = 3;
+  numberGrid[1][3] = 1;
+  numberGrid[2][0] = 3;
+  numberGrid[2][1] = 4;
+  numberGrid[2][2] = 1;
+  numberGrid[2][3] = 2;
+  numberGrid[3][0] = 2;
+  numberGrid[3][1] = 1;
+  numberGrid[3][2] = 4;
+  numberGrid[3][3] = 3;
 #endif
 
 #ifdef DEBUG
@@ -874,6 +915,13 @@ void highscoreSystem() {
   sortTable();
 
   printTable();
+
+  while (buttonPress() == 0) {
+  }
+  delay(50);
+  while (buttonPress() != 0) {
+  }
+  gameReset();
 
 #ifdef DEBUG
   Serial.println("End highscores...");
@@ -1067,64 +1115,33 @@ void sortTable() {
 }
 
 
-
-
-
 void printTable() {
 
 
   //Print table of names and scores
-  // lcd.setCursor(0, 0);
-  // lcd.print("High Scores");
-  // lcd.setCursor(0, 1);
-  // lcd.print("#1:");
-  // lcd.setCursor(0, 2);
-  // lcd.print("#2:");
-  // lcd.setCursor(0, 3);
-  // lcd.print("#3:");
+  lcd.clear();
+  lcd.noCursor();
+  lcd.setCursor(0, 0);
+  lcd.print("HIGH SCORES");
+  lcd.setCursor(0, 1);
+  lcd.print("#1:");
+  lcd.setCursor(0, 2);
+  lcd.print("#2:");
+  lcd.setCursor(0, 3);
+  lcd.print("#3:");
 
-  // //1: henkilön score
-  // for (i = 0; i < 8; i++) {
-  //   lcd.setCursor(12, 1);
-  //   lcd.print(parsedNumbers[i]);
-  // }
 
-  // //2: henkilön score
-  // for (i = 0; i < 7; i++) {
-  //   lcd.setCursor(12, 2);
-  //   lcd.print(parsedNumbers[i]);
-  // }
 
-  // //3: henkilön score
-  // for (i = 0; i < 6; i++) {
-  //   lcd.setCursor(12, 3);
-  //   lcd.print(parsedNumbers[i]);
-  // }
+  char name;
 
-  // //1: henkilön nimi
-  // for (i = 0; i < 8; i++) {
-  //   for (int j = 0; j < 6; j++) {
-
-  //     lcd.setCursor(j + 3, 1);
-  //     lcd.print(namesAndNumbers[i][j]);  //print name
-  //   }
-  // }
-
-  // //2: henkilön nimi
-  // for (i = 0; i < 7; i++) {
-  //   for (int j = 0; j < 6; j++) {
-
-  //     lcd.setCursor(j + 3, 2);
-  //     lcd.print(namesAndNumbers[i][j]);  //print name
-  //   }
-  // }
-
-  // //3: henkilön nimi
-  // for (i = 0; i < 6; i++) {
-  //   for (int j = 0; j < 6; j++) {
-
-  //     lcd.setCursor(j + 3, 3);
-  //     lcd.print(namesAndNumbers[i][j]);  //print name
-  //   }
-  // }
+  //henkilön nimi ja score
+  for (int i = 1; i < 4; i++) {
+    for (int j = 0; j < 6; j++) {
+      lcd.setCursor(j + 3, i);
+      name = rawData[i * 9 - 9 + j];
+      lcd.print(name);
+    }
+    lcd.setCursor(10, i);
+    lcd.print(rawData[i * 9 - 3]);
+  }
 }
