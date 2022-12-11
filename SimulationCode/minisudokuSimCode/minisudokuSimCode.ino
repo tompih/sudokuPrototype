@@ -452,32 +452,42 @@ void sideMenu(void) {
 
 //creates starting numbers
 void randomStartingNumbers(void) {
+  int tempSubgrids[4] = { 0 };  //temporary array to track which subgrids have been taken
+  int randomSubgrid = 0;
+  int row = 0;
+  int col = 0;
 
-  int randomNum1 = 0;
-  int randomNum2 = 0;
-
-  //assign numbers 1-4 on random positions
+  //assign numbers 1-4 to random positions
   for (int i = 0; i < 4; i++) {
-    //get two random numbers between 1 and 4
-    randomNum1 = random(4);
-    randomNum2 = random(4);
+    //what subgrid we're using and which row and column we're placing the number in
+    randomSubgrid = random(4);
+    row = random(2);
+    col = random(2);
 
-    //log our starting number position
-    startingNumPos[i][0] = randomNum1;
-    startingNumPos[i][1] = randomNum2;
+    //subgrid has already been used
+    if (tempSubgrids[randomSubgrid] != 0) {
+      i--;  //run this loop until all subgrids have a number
+    } else {
+      tempSubgrids[randomSubgrid] = 1;  //mark subgrid as taken
+
+      //3 and 4 are on the next row of subgrids
+      if (randomSubgrid >= 2) {
+        row += 2;
+      }
+      //4 and 2 are on the next column of subgrids
+      if (randomSubgrid % 2 == 1) {
+        col += 2;
+      }
+
+      numberGrid[row][col] = i + 1; //place the number
+
+      //log our starting number position
+      startingNumPos[i][0] = row;
+      startingNumPos[i][1] = col;
 
 #ifdef DEBUG
-    Serial.println((String) "TEST:" + startingNumPos[i][0] + " and " + startingNumPos[i][1]);
+      Serial.println((String)i + ". starting num pos:" + startingNumPos[i][0] + " and " + startingNumPos[i][1]);
 #endif
-
-    //check if position already has a number
-    if (numberGrid[randomNum1][randomNum2] != 0) {
-      i--;  //decrement i because we want to run this process until all four positions are unique
-            //this has a theoretical possibility to never resolve, but it is too unlikely
-            //if this seems slow we can make it so it's hardwired to go to x square and if that fails then y and so on
-    } else {
-      //there was no starting number here so we place it here
-      numberGrid[randomNum1][randomNum2] = i + 1;
     }
   }
 }
