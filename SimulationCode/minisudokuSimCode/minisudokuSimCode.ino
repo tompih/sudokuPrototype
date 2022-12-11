@@ -8,37 +8,9 @@ unsigned long startTime = 0;
 unsigned long endTime = 0;
 unsigned long finalTime = 0;
 
-int playerScore = 0;  // this will be time + penalty, par scoring
+int playerScore = 0;  //this will be time + penalty, par scoring
 
-const char chars[] = {
-  ' ',
-  'A',
-  'B',
-  'C',
-  'D',
-  'E',
-  'F',
-  'G',
-  'H',
-  'I',
-  'J',
-  'K',
-  'L',
-  'M',
-  'N',
-  'O',
-  'P',
-  'Q',
-  'R',
-  'S',
-  'T',
-  'U',
-  'V',
-  'W',
-  'X',
-  'Y',
-  'Z',
-};  //add any additional characters
+const char chars[] = { ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };  //add any additional characters
 char taulukko[6] = { ' ', ' ', ' ', ' ', ' ', ' ' };
 int rawData[27] = { 0 };  //store data from eeprom here first to do sorting and such with it
 
@@ -479,7 +451,7 @@ void randomStartingNumbers(void) {
         col += 2;
       }
 
-      numberGrid[row][col] = i + 1; //place the number
+      numberGrid[row][col] = i + 1;  //place the number
 
       //log our starting number position
       startingNumPos[i][0] = row;
@@ -814,8 +786,6 @@ void gameVictory(void) {
             break;
           }
 
-
-
           break;
         default:
 #ifdef DEBUG
@@ -851,6 +821,15 @@ void gameReset(void) {
   }
 
 #ifdef DEBUG
+  for (int i = 0; i < 4; i++) {
+    Serial.println();
+    for (int j = 0; j < 4; j++) {
+      Serial.print(numberGrid[i][j]);
+    }
+  }
+#endif
+
+#ifdef DEBUG
   //debug grid
   numberGrid[0][0] = 1;
   numberGrid[0][1] = 3;
@@ -868,21 +847,6 @@ void gameReset(void) {
   numberGrid[3][1] = 1;
   numberGrid[3][2] = 4;
   numberGrid[3][3] = 3;
-#endif
-
-#ifdef DEBUG
-  for (int i = 0; i < 4; i++) {
-    Serial.println();
-    for (int j = 0; j < 4; j++) {
-      Serial.print(numberGrid[i][j]);
-    }
-  }
-#endif
-
-  //setup(); //this alone works for about 4 games and then the board supposedly runs out of memory
-
-#ifdef DEBUG
-  //randomStartingNumbers();
 #else
   //give 4 starting numbers from 1 to 4 at random positions
   randomStartingNumbers();
@@ -923,20 +887,21 @@ void highscoreSystem() {
   Serial.println("Begin highscores...");
 #endif
 
-  getFromEEPROM();
+  getFromEEPROM();  //get data from EEPROM
 
-  parseScores();
+  parseScores();  //parse data into a more manageable form
 
-  sortTable();
+  sortTable();  //sort existing scores before comparison
 
   if (compareScoreToTable() == 1) {
-    overwriteWorstScore();
+    overwriteWorstScore();  //score was better than at least one other in EEPROM so we overwrite the worst one
   }
 
-  sortTable();
+  sortTable();  //sort again
 
-  printTable();
+  printTable();  //print sorted scores on screen
 
+  //press any key to exit
   while (buttonPress() == 0) {
   }
   delay(50);
@@ -1135,10 +1100,8 @@ void sortTable() {
 #endif
 }
 
-
+//prints highscores on the lcd
 void printTable() {
-
-
   //Print table of names and scores
   lcd.clear();
   lcd.noCursor();
@@ -1150,8 +1113,6 @@ void printTable() {
   lcd.print("#2:");
   lcd.setCursor(0, 3);
   lcd.print("#3:");
-
-
 
   char name;
 
