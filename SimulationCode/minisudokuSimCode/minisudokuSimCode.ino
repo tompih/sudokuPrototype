@@ -425,42 +425,109 @@ void sideMenu(void) {
 
 //creates starting numbers
 void randomStartingNumbers(void) {
-  int tempSubgrids[4] = { 0 };  //temporary array to track which subgrids have been taken
-  int randomSubgrid = 0;
-  int row = 0;
-  int col = 0;
+#ifdef DEBUG
+  int overallAttempts = 0;  //track how many attempted number places it took to find a grid
+#endif
+  int attemptCounter = 0;  //used for guessing if attempted grid is most likely impossible
+  int numCount = 0;        //count to 16 = all numbers have been filled
 
-  //assign numbers 1-4 to random positions
-  for (int i = 0; i < 4; i++) {
-    //what subgrid we're using and which row and column we're placing the number in
-    randomSubgrid = random(4);
-    row = random(2);
-    col = random(2);
+  //random number holders
+  int ran1 = 0;
+  int ran2 = 0;
+  int ran3 = 0;
 
-    //subgrid has already been used
-    if (tempSubgrids[randomSubgrid] != 0) {
-      i--;  //run this loop until all subgrids have a number
-    } else {
-      tempSubgrids[randomSubgrid] = 1;  //mark subgrid as taken
+  //tables for bitwise comparisons
+  int bitCheck[4] = { 0 };
+  int bitCheckCol[4] = { 0 };
 
-      //3 and 4 are on the next row of subgrids
-      if (randomSubgrid >= 2) {
-        row += 2;
+  //run until we have a valid grid full of numbers
+  while (1) {
+    //new attempt: zero arrays and bitwise check arrays
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        numberGrid[i][j] = 0;
       }
-      //4 and 2 are on the next column of subgrids
-      if (randomSubgrid % 2 == 1) {
-        col += 2;
+      bitCheck[i] = 0;
+      bitCheckCol[i] = 0;
+    }
+
+    //zero attempt counts
+    numCount = 0;
+    attemptCounter = 0;
+
+    //run until grid is full
+    while (numCount != 16) {
+      ran1 = rand() % 4;  //row
+      ran2 = rand() % 4;  //col
+      ran3 = rand() % 4;  //number
+
+      //current place doesn't have a number
+      if (numberGrid[ran1][ran2] == 0) {
+        //(row) NAND (random number), same for col
+        //bits implicate which numbers have been placed on specified rows and columns
+        if (~(bitCheck[ran1] | ~(1 << ran3)) && ~(bitCheckCol[ran2] | ~(1 << ran3))) {
+          bitCheck[ran1] += 1 << ran3;     //0 = 0001, 1 = 0010
+          bitCheckCol[ran2] += 1 << ran3;  //2 = 0100, 3 = 1000
+
+          numberGrid[ran1][ran2] = ran3 + 1;  //add the random number to current position
+
+          numCount++;  //when we reach 16 we are done
+        }
       }
-
-      numberGrid[row][col] = i + 1;  //place the number
-
-      //log our starting number position
-      startingNumPos[i][0] = row;
-      startingNumPos[i][1] = col;
+      attemptCounter++;  //track attempts
 
 #ifdef DEBUG
-      Serial.println((String)i + ". starting num pos:" + startingNumPos[i][0] + " and " + startingNumPos[i][1]);
+      overallAttempts++;
 #endif
+
+      //too many attempts, this grid is probably impossible so try again
+      if (attemptCounter >= 175) {
+        break;
+      }
+    }
+
+    //grid is valid and we can exit
+    if (numberValidityCheck(numberGrid) == 0) {
+      break;
+    }
+  }
+
+#ifdef DEBUG
+  Serial.print("found valid grid, attempts: ");
+  Serial.println(overallAttempts);
+
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      Serial.print(numberGrid[i][j]);
+    }
+    Serial.println("");
+  }
+#endif
+
+  //remove numbers from random places
+  for (int i = 0; i < 12; i++) {
+    ran1 = rand() % 4;  //row
+    ran2 = rand() % 4;  //col
+
+    //still has a number on it
+    if (numberGrid[ran1][ran2] != 0) {
+      numberGrid[ran1][ran2] = 0;
+    } else {
+      i--;  //try again
+    }
+  }
+
+  //log starting number positions
+  int startNumIndex = 0;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      //has a number
+      if (numberGrid[i][j] > 0) {
+        startingNumPos[startNumIndex][0] = i;  //rows
+        startingNumPos[startNumIndex][1] = j;  //cols
+
+        startNumIndex++;  //next starting number to log
+      }
     }
   }
 }
@@ -574,10 +641,10 @@ int numberValidityCheck(int gridNums[4][4]) {
 
 //game victory sequence
 void gameVictory(void) {
-  endTime = millis(); //stop timer
-  finalTime = (endTime - startTime) / 1000; //calculate final time and divide to get readable number
-  playerScore -= 12 * 5;     //subtract minimum penalty from score
-  playerScore += finalTime;  //add time to score
+  endTime = millis();                        //stop timer
+  finalTime = (endTime - startTime) / 1000;  //calculate final time and divide to get readable number
+  playerScore -= 12 * 5;                     //subtract minimum penalty from score
+  playerScore += finalTime;                  //add time to score
 #ifdef DEBUG
   Serial.print("Time: ");
   Serial.println(finalTime);
@@ -804,7 +871,7 @@ void gameVictory(void) {
 
 //restarts the game by reassigning starting numbers, zeroing flags, counters, clearing screen etc.
 void gameReset(void) {
-  
+
   //reset time values to zero
   startTime = 0;
   endTime = 0;
@@ -881,7 +948,7 @@ void gameReset(void) {
 
   lcd.cursor();  //enable cursor
 
-  startTime = millis(); //get starting time
+  startTime = millis();  //get starting time
 }
 
 //EEPROM / highscore management
