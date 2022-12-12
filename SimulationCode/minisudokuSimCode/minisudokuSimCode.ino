@@ -4,6 +4,7 @@
 //comment this out to disable debug messages to serial monitor
 #define DEBUG
 
+//these are for calculating game time
 unsigned long startTime = 0;
 unsigned long endTime = 0;
 unsigned long finalTime = 0;
@@ -573,8 +574,8 @@ int numberValidityCheck(int gridNums[4][4]) {
 
 //game victory sequence
 void gameVictory(void) {
-  endTime = millis();
-  finalTime = (endTime - startTime) / 1000;
+  endTime = millis(); //stop timer
+  finalTime = (endTime - startTime) / 1000; //calculate final time and divide to get readable number
   playerScore -= 12 * 5;     //subtract minimum penalty from score
   playerScore += finalTime;  //add time to score
 #ifdef DEBUG
@@ -803,6 +804,8 @@ void gameVictory(void) {
 
 //restarts the game by reassigning starting numbers, zeroing flags, counters, clearing screen etc.
 void gameReset(void) {
+  
+  //reset time values to zero
   startTime = 0;
   endTime = 0;
   finalTime = 0;
@@ -878,7 +881,7 @@ void gameReset(void) {
 
   lcd.cursor();  //enable cursor
 
-  startTime = millis();
+  startTime = millis(); //get starting time
 }
 
 //EEPROM / highscore management
